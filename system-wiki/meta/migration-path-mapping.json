@@ -1,0 +1,83 @@
+{
+  "connections": {
+    "central": {
+      "name": "central",
+      "migration_paths": [
+        "database/migrations"
+      ],
+      "migration_paths_absolute": [
+        "/Users/cashkalina/code/everspot/database/migrations"
+      ],
+      "exclude_patterns": [
+        "database/migrations/tenant/**"
+      ],
+      "description": "Central database - users, tenants, roles, global configuration",
+      "typical_tables": [
+        "users",
+        "tenants",
+        "roles",
+        "permissions",
+        "password_resets",
+        "personal_access_tokens"
+      ]
+    },
+    "tenant": {
+      "name": "tenant",
+      "migration_paths": [
+        "database/migrations/tenant"
+      ],
+      "migration_paths_absolute": [
+        "/Users/cashkalina/code/everspot/database/migrations/tenant"
+      ],
+      "exclude_patterns": [],
+      "description": "Tenant databases - cemetery data, transactions, plots, services",
+      "typical_tables": [
+        "plots",
+        "burials",
+        "contracts",
+        "payments",
+        "transactions",
+        "services"
+      ]
+    }
+  },
+  "detection_rules": {
+    "description": "Rules for detecting when to regenerate schema snapshots during sync",
+    "central": {
+      "trigger": "Any .php file added/modified in database/migrations/ excluding tenant/ subdirectory",
+      "command": "git log <synced_through>..origin/main --name-only -- database/migrations/*.php | grep -v tenant/",
+      "action": "Regenerate schema/central.json"
+    },
+    "tenant": {
+      "trigger": "Any .php file added/modified in database/migrations/tenant/",
+      "command": "git log <synced_through>..origin/main --name-only -- database/migrations/tenant/",
+      "action": "Regenerate schema/tenant.json"
+    }
+  },
+  "sync_integration": {
+    "description": "How sync command uses this mapping (see commands.md §3.2)",
+    "steps": [
+      "1. Read synced_through from meta/wiki-state.json",
+      "2. List commits between synced_through and origin/main",
+      "3. For each connection, check if any commits touched migration_paths",
+      "4. If yes, regenerate that connection's schema snapshot",
+      "5. Diff new snapshot vs previous to find changed tables",
+      "6. Find model documents for changed tables and regenerate them"
+    ]
+  },
+  "notes": [
+    "Migration paths follow standard Laravel + stancl/tenancy conventions",
+    "Central migrations typically in database/migrations/ root",
+    "Tenant migrations typically in database/migrations/tenant/ subdirectory",
+    "Actual paths should be verified in Everspot's TenancyServiceProvider configuration",
+    "All tenants share one schema, so any migrated tenant is authoritative"
+  ],
+  "verified_paths": {
+    "everspot_repo": "/Users/cashkalina/code/everspot",
+    "central_migrations": "/Users/cashkalina/code/everspot/database/migrations",
+    "tenant_migrations": "/Users/cashkalina/code/everspot/database/migrations/tenant",
+    "verified_at": "2026-06-12",
+    "central_migration_count": 27,
+    "tenant_migration_count": 2
+  }
+}

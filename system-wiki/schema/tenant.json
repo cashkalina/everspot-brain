@@ -1,0 +1,43 @@
+{
+  "snapshot_commit": "ERROR_EVERSPOT_UNAVAILABLE",
+  "generated_at": "2026-06-12T00:00:00.000000Z",
+  "connection": "tenant",
+  "error": {
+    "code": "EVERSPOT_REPOSITORY_NOT_FOUND",
+    "message": "Could not generate schema snapshot: Everspot repository does not exist at configured path",
+    "configured_path": "/Users/cashkalina/code/everspot-brain/everspot",
+    "blocker": "Repository must be cloned/available before schema extraction can run",
+    "impact": "Model generation blocked until real schema snapshot is created",
+    "remediation_steps": [
+      "1. Clone or symlink Everspot repository to /Users/cashkalina/code/everspot-brain/everspot",
+      "2. Ensure Everspot is runnable: .env configured, composer install completed, tenant context configured",
+      "3. Create or identify a reference tenant for introspection",
+      "4. Run tenant database migrations: php artisan tenants:migrate",
+      "5. Copy tools/WikiSchemaSnapshot.php to Everspot's app/Console/Commands/",
+      "6. Generate snapshot via tenant context: php artisan tenants:run <tenant-id> --command=\"wiki:schema-snapshot tenant --output=/tmp/tenant.json\"",
+      "7. Copy /tmp/tenant.json to /path/to/wiki/schema/tenant.json",
+      "8. Commit the generated snapshot"
+    ],
+    "tenant_context_notes": [
+      "Tenant snapshot requires entering tenant context via stancl/tenancy",
+      "All tenants share one schema - any freshly migrated tenant is authoritative",
+      "Can use throwaway tenant if needed: create, migrate, extract, destroy",
+      "Alternatively set up permanent reference tenant for extractions"
+    ]
+  },
+  "tables": {},
+  "meta": {
+    "extraction_method": "NOT_EXTRACTED",
+    "laravel_version": "unknown",
+    "database_driver": "unknown",
+    "table_count": 0,
+    "generated_by": "Phase 3 skeleton generator - awaiting real extraction"
+  },
+  "_notes": [
+    "This is a SKELETON snapshot with error markers.",
+    "It allows the wiki build to continue despite the Everspot blocker.",
+    "Model generation will fail validation until this is replaced with a real snapshot.",
+    "See meta/phase3-build-log.md for full blocker details and resolution steps.",
+    "Tenant extraction requires special handling for stancl/tenancy context."
+  ]
+}

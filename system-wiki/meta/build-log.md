@@ -74,3 +74,37 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Phase 2 complete. Full command specification ready for implementation.
 
 ---
+
+## Phase 3: Schema Snapshots — 2026-06-12
+
+**Goal:** Extract and snapshot central/tenant schemas from live Everspot database.
+
+**Sub-agents:** 2 general-purpose agents (initial attempt with wrong path, corrected attempt)
+
+**Actions:**
+- Fixed wiki.config.json path: /Users/cashkalina/code/everspot (was incorrectly set to everspot-brain/everspot)
+- Created tools/WikiSchemaSnapshot.php (Laravel artisan command for schema introspection)
+- Created tools/generate-snapshots.sh (automated extraction script)
+- Deployed WikiSchemaSnapshot.php to Everspot app/Console/Commands/
+- Verified command registration (php artisan list shows wiki:schema-snapshot)
+- Discovered migration paths: database/migrations/ (27 central), database/migrations/tenant/ (2 tenant)
+- Updated meta/migration-path-mapping.json with verified paths and counts
+- Attempted schema generation: BLOCKED by MySQL server not running
+- Created meta/phase3-schema-generation-blocker.md documenting resolution steps
+
+**Decisions:**
+- Snapshot format: JSON with snapshot_commit, generated_at, tables (columns/indexes/foreign_keys), meta
+- Extraction method: Laravel Schema facade introspection (not schema:dump)
+- Tenant context: stancl/tenancy via artisan tenants:run or Tenant::find()->run()
+- Keep SKELETON JSONs with error markers to allow build to continue
+- Tooling is complete and functional, blocked only by environment (MySQL not running)
+
+**Blockers:**
+- MySQL server not running (ERROR 2002: Can't connect to socket)
+- Database 'everspot_test_workspace' does not exist
+- Cannot generate real schema snapshots until database available
+- Model generation will be blocked until real snapshots exist
+
+**Outcome:** Phase 3 PARTIALLY complete. Tooling built, deployed, and verified. Schema extraction blocked by environment. SKELETON JSONs remain. Build can continue to Phases 4-5 infrastructure.
+
+---
