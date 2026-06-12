@@ -149,3 +149,86 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Phase 4 complete. Payment model fully documented (208 lines), Transaction module structure created. Template validated, improvements identified. Vertical slice demonstrates end-to-end documentation process.
 
 ---
+
+## Phase 5: Mechanization — 2026-06-12
+
+**Goal:** Build a script that deterministically produces the mechanical parts of a model doc, leaving only prose for AI.
+
+**Sub-agent:** general-purpose agent for tool development and verification
+
+**Actions:**
+- Created tools/extract-model-skeleton.php (PHP standalone script, 700+ lines)
+- Implemented recursive inheritance parsing (model → parent → BaseModel)
+- Built source path derivation (model, parents, traits, scopes)
+- Implemented property extraction ($casts, $fillable, $guarded, $appends, $hidden, custom arrays)
+- Implemented method signature extraction with relationship detection
+- Implemented scope extraction (global scopes, query scopes)
+- Added STI pattern support (separate "Defined in X" vs "Inherited from Y" sections)
+- Verified against Payment model vertical slice
+- Created tools/extract-model-skeleton-README.md (usage documentation)
+
+**Design decisions:**
+- Language: PHP (no Laravel dependencies, parses source as text via regex)
+- Reads via git: `git show origin/main:<path>` pattern (not working tree)
+- Outputs to STDOUT (pipe-friendly, errors to STDERR)
+- Separates mechanical vs AI sections with `<!-- AI: ... -->` markers
+- Handles inheritance: recursively parses parent classes and traits
+- Derives source_paths: model file, parent files, trait files, scope files
+- Extracts related models: from relationship method signatures (heuristic)
+
+**Mechanical sections (script produces):**
+- Frontmatter: model, module, table, source_paths, related[], built_at, deprecated
+- Properties/Casts section: all property arrays with inheritance separated
+- Relationships section: method signatures with return types, inheritance separated
+- Key Methods section: public method signatures, inheritance separated
+- Scopes section: global scopes, query scopes, inheritance separated
+- Section structure and headers
+
+**AI sections (marked for prose):**
+- Overview (business purpose, characteristics, system fit)
+- Connection (if not explicit in $connection property)
+- Relationship descriptions (what each relationship means)
+- Method descriptions (what each method does)
+- Common Usage examples (code samples)
+- Tags (controlled vocabulary selection)
+- Completeness (complete/partial/stub assessment)
+- Events/observers documentation
+
+**Verification results (Payment model):**
+- source_paths: 8 files detected (Payment, Transaction, BaseModel, 5 traits) ✓
+- Table name: "transactions" (inherited from Transaction via STI) ✓
+- related[]: includes Transaction parent + 12 relationships ✓
+- Properties: Correctly separates Payment's guarded from Transaction's casts/money/searchable ✓
+- Relationships: 1 defined in Payment, 11 inherited from Transaction ✓
+- Methods: 0 defined in Payment, 21+ inherited from Transaction ✓
+- Scopes: 1 global scope (TransactionByTypeScope), 6 query scopes inherited ✓
+- All mechanical sections match hand-written payment.md structure ✓
+
+**Limitations discovered:**
+- Related model names use heuristic pluralization (journalEntries → JournalEntrie)
+- Cannot determine connection without schema snapshot lookup
+- Cannot extract method body content (events, observers)
+- Cannot parse trait method definitions (only lists trait in source_paths)
+- Does not extract constants/enums (TYPES, STATUSES arrays)
+- Polymorphic relationship names are abstract (Transactionable, Postable)
+
+**Integration points:**
+- Generate command: skeleton → AI fill → validate → commit
+- Sync command: regenerate skeleton → preserve human blocks → AI refill → validate
+- Schema rendering: future enhancement to read snapshot JSON and render table
+- Connection determination: future enhancement to check which snapshot contains table
+- Validation: future tool to diff skeleton vs existing doc
+
+**Key learnings:**
+- Inheritance extraction is complex but achievable with recursive parsing
+- Regex parsing sufficient for Laravel model structure (no need for full PHP parser)
+- STI pattern requires special handling (parent table name, type scopes)
+- Source path derivation requires searching common trait/scope locations
+- Relationship detection by return type works well for standard Eloquent relationships
+- Separating "Defined" vs "Inherited" sections essential for STI clarity
+- AI markers (`<!-- AI: ... -->`) provide clear handoff between mechanical and prose
+- Script is idempotent and safe (reads only, outputs to STDOUT)
+
+**Outcome:** Phase 5 complete. Extraction script operational and verified against Payment vertical slice. Produces mechanical sections deterministically, leaves prose clearly marked for AI. Ready for Generate/Sync command integration.
+
+---
