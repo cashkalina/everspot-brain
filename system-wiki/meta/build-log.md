@@ -47,3 +47,30 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Phase 1 complete. Directory structure matches §4 exactly. All operating-layer files created.
 
 ---
+
+## Phase 2: Command Specifications — 2026-06-12
+
+**Goal:** Write meta/commands.md with full specifications for all wiki maintenance commands.
+
+**Sub-agent:** general-purpose agent for command specification authoring
+
+**Actions:**
+- Created comprehensive meta/commands.md with 11 sections
+- Specified 7 core commands: Generate, Sync, Snapshot-schema, Update, Audit, Review-coverage, Bootstrap
+- Detailed source_paths derivation algorithm (model class, traits, parent, observers, inverses)
+- Specified connection determination (from $connection property, validated against snapshot)
+- Defined validation gate (schema diff, relationship checks, method signatures)
+- Specified human content reconciliation with targeted invalidation (only flag when named identifiers appear in changes)
+- Detailed resumable sync mechanics (synced_through advances only past successful regenerations)
+
+**Decisions:**
+- Schema extraction mechanics: left intentionally open (introspection vs schema:dump), specified shape and requirements
+- Re-derivation timing: ALWAYS re-derive source_paths from current origin/main when checking freshness
+- Rename/split/merge: NOT auto-detected; surface for human confirmation, preserve deprecated docs
+- Audit scope: six check types defined; semantic MECE violations require human judgment
+- All Everspot reads via `git show origin/main:<path>` pattern
+- Targeted flagging to avoid alarm fatigue on human notes
+
+**Outcome:** Phase 2 complete. Full command specification ready for implementation.
+
+---
