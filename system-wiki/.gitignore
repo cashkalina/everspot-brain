@@ -1,0 +1,5 @@
+# Machine-local configuration
+wiki.config.json
+
+# Local fallback logs
+*.fallback.log
