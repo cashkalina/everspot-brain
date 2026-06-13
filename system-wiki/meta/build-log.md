@@ -399,3 +399,17 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** END-TO-END PIPELINE PROVEN. Snapshot → render → validate working for both STI and plain models, both connections. All 4 models validated.
 
 ---
+
+### Task 6: Tear Down Throwaway Resources — COMPLETE
+
+**Goal:** Clean up throwaway databases and tenant created for schema extraction.
+
+**Actions:**
+- Dropped database: wiki_scratch_central
+- Dropped database: tenant_11b2f517-e921-42f8-b2bd-36574bc5125a
+- Restored .env DB_DATABASE to everspot_test_workspace
+- Verified no wiki_scratch* or *11b2f517* databases remain
+
+**Outcome:** All throwaway resources cleaned up. No forbidden databases touched. Environment restored to pre-FIX state.
+
+---
