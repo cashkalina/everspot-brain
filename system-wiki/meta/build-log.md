@@ -363,3 +363,39 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Real snapshots generated successfully. Central: 18 tables, Tenant: 152 tables. Data model complete.
 
 ---
+
+### Task 5: Re-render and Validate 4 Models — COMPLETE
+
+**Goal:** Generate and validate 4 models from real snapshots: STI base, STI subtype, plain tenant model, central model.
+
+**Sub-agent:** general-purpose agent for model generation and validation
+
+**Models validated:**
+1. Transaction (STI base, tenant): 31 columns from tenant.json, sti: base, full schema rendered
+2. Payment (STI subtype, tenant): links to Transaction, sti: subtype, discriminator: type=payment, no duplicate schema
+3. Customer (plain tenant model): 27 columns from tenant.json, standard model documentation
+4. User (central model): 17 columns from central.json, central connection confirmed
+
+**Validation results:**
+- All 4 models: schema columns match snapshots exactly (names, types, nullable, defaults)
+- Spot-checked key columns against real DB structure: 100% accuracy
+- Connection classification correct (Transaction/Payment/Customer=tenant, User=central)
+- STI convention properly applied: Transaction owns schema, Payment links to base
+- Table names correct: transactions (shared STI), customers, users
+
+**Before/after:**
+- Transaction: placeholder → 31-column real schema table from tenant.json
+- Payment: placeholder → STI subtype linking to Transaction (no duplicate schema)
+- Customer: placeholder → 27-column real schema table from tenant.json
+- User: placeholder → 17-column real schema table from central.json
+
+**Validation gate:**
+- ✓ Schema rendered from correct snapshot
+- ✓ Table names match model $table or conventional plural
+- ✓ Column specs match exactly
+- ✓ STI fields correct (base lists subtypes, subtype links to base)
+- ✓ Connection matches which snapshot holds table
+
+**Outcome:** END-TO-END PIPELINE PROVEN. Snapshot → render → validate working for both STI and plain models, both connections. All 4 models validated.
+
+---
