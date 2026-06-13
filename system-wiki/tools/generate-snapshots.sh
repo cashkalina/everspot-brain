@@ -6,6 +6,9 @@
 # Automates the extraction of central and tenant schema snapshots from Everspot.
 # Run this script whenever migrations have been applied to regenerate snapshots.
 #
+# This script now uses the standalone generate-schema-snapshots.php which boots
+# Everspot's framework in-process WITHOUT writing any files to Everspot.
+#
 # Usage:
 #   ./tools/generate-snapshots.sh [tenant-id]
 #
@@ -49,33 +52,18 @@ echo "==> Using Everspot repository: $EVERSPOT_PATH"
 echo "==> Wiki repository: $WIKI_ROOT"
 echo ""
 
-# Check if command exists
-cd "$EVERSPOT_PATH"
-if ! php artisan list | grep -q wiki:schema-snapshot; then
-    echo "ERROR: wiki:schema-snapshot command not found"
-    echo ""
-    echo "Installation required:"
-    echo "  cp $WIKI_ROOT/tools/WikiSchemaSnapshot.php $EVERSPOT_PATH/app/Console/Commands/"
-    exit 1
-fi
-
-# Generate central snapshot
-echo "==> Generating central schema snapshot..."
-php artisan wiki:schema-snapshot central \
-    --output="$WIKI_ROOT/schema/central.json" \
-    -v
-
-echo ""
-
-# Generate tenant snapshot
-echo "==> Generating tenant schema snapshot..."
-
 # Determine tenant ID
 TENANT_ID="${1:-}"
 if [ -z "$TENANT_ID" ]; then
-    echo "    Finding first available tenant..."
-    # Attempt to get first tenant ID (this assumes tenants table exists)
-    TENANT_ID=$(php artisan tinker --execute='echo \App\Models\Tenant::first()->id ?? "";' 2>/dev/null || echo "")
+    echo "==> Finding first available tenant..."
+    cd "$EVERSPOT_PATH"
+
+    # Attempt to get first tenant ID
+    TENANT_MODEL_CLASS=$(php artisan tinker --execute='echo config("tenancy.tenant_model");' 2>/dev/null || echo "")
+
+    if [ -n "$TENANT_MODEL_CLASS" ]; then
+        TENANT_ID=$(php artisan tinker --execute="echo ${TENANT_MODEL_CLASS}::first()->id ?? '';" 2>/dev/null || echo "")
+    fi
 
     if [ -z "$TENANT_ID" ]; then
         echo ""
@@ -90,23 +78,18 @@ if [ -z "$TENANT_ID" ]; then
     fi
 
     echo "    Using tenant: $TENANT_ID"
+    echo ""
 fi
 
-# Create temp file for tenant snapshot
-TEMP_FILE=$(mktemp)
-trap "rm -f $TEMP_FILE" EXIT
+# Generate snapshots using standalone script
+php "$SCRIPT_DIR/generate-schema-snapshots.php" \
+    --central "$WIKI_ROOT/schema/central.json" \
+    --tenant "$WIKI_ROOT/schema/tenant.json" \
+    --tenant-id "$TENANT_ID"
 
-# Generate via tenant context
-php artisan tenants:run "$TENANT_ID" \
-    --command="wiki:schema-snapshot tenant --output=$TEMP_FILE"
-
-# Copy to wiki
-cp "$TEMP_FILE" "$WIKI_ROOT/schema/tenant.json"
-
-echo ""
+# Verify snapshots
 echo "==> Verifying snapshots..."
 
-# Verify JSONs
 if command -v jq &> /dev/null; then
     echo "    Validating JSON format..."
     jq . "$WIKI_ROOT/schema/central.json" > /dev/null && echo "    ✓ central.json valid"
@@ -138,6 +121,3 @@ echo "  1. Review the generated snapshots"
 echo "  2. Commit to wiki repository if changes detected"
 echo "  3. Run wiki sync to update affected model documents"
 echo ""
-echo "Files:"
-echo "  - $WIKI_ROOT/schema/central.json"
-echo "  - $WIKI_ROOT/schema/tenant.json"

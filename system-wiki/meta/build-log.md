@@ -258,3 +258,35 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** STI convention fully encoded in spec. Foundation.md §5.3 added, conventions.md model enumeration updated, model-template.md has complete base/subtype templates.
 
 ---
+
+### Task 2: Standalone Schema Extractor — COMPLETE
+
+**Goal:** Replace WikiSchemaSnapshot.php (required copy to Everspot) with standalone script that boots Everspot in-process.
+
+**Sub-agent:** general-purpose agent for standalone extractor creation
+
+**Actions:**
+- Created tools/generate-schema-snapshots.php (396 lines, self-contained)
+- Boots Everspot framework in-process: require vendor/autoload + bootstrap/app, boot console kernel
+- Handles tenant context via stancl/tenancy: tenancy()->initialize($tenant), extract, tenancy()->end()
+- Anchors snapshot_commit to Everspot origin/main commit (fallback to HEAD with warning)
+- Skips 11 framework/noise tables: migrations, jobs, cache, telescope_*, nova_*, pulse_*, etc.
+- Updated tools/generate-snapshots.sh to call new standalone script
+- Command-line interface: --central, --tenant, --tenant-id parameters
+
+**Key design:**
+- NO writes to Everspot repo (read-only framework boot)
+- Tenant model dynamically loaded from config('tenancy.tenant_model')
+- Connection switching: central connection for central DB, tenant connection after tenancy initialization
+- Same JSON output format as Phase 3 (snapshot_commit, tables, meta)
+- Executable from wiki repo: php tools/generate-schema-snapshots.php
+
+**Safety guarantees:**
+- Framework boot validation (checks vendor/autoload, bootstrap/app, DB connections)
+- Tenant existence validation before initialization
+- Proper tenancy cleanup (tenancy()->end())
+- Clear error messages if boot fails
+
+**Outcome:** Standalone extractor operational. No Everspot writes required. WikiSchemaSnapshot.php obsolete (should be removed). Ready for Task 3 execution.
+
+---
