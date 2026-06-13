@@ -232,3 +232,29 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Phase 5 complete. Extraction script operational and verified against Payment vertical slice. Produces mechanical sections deterministically, leaves prose clearly marked for AI. Ready for Generate/Sync command integration.
 
 ---
+
+## FIX-AND-VALIDATE Pass — 2026-06-12
+
+### Task 1: STI Convention Adoption — COMPLETE
+
+**Goal:** Encode STI (Single Table Inheritance) pattern in foundation.md, conventions.md, model-template.md
+
+**Sub-agent:** general-purpose agent for spec updates
+
+**Actions:**
+- Added §5.3 to foundation.md: "Single Table Inheritance (STI) pattern documentation"
+- Updated conventions.md: added STI detection rules, table ownership, model enumeration
+- Updated model-template.md: added STI frontmatter fields, base/subtype templates, selection rules
+- Used Transaction/Payment as consistent running example across all three files
+
+**STI rules encoded:**
+- Base model (e.g., Transaction): owns full schema from snapshot, `sti: base`, `sti_subtypes: [...]`
+- Subtype model (e.g., Payment): links to base for schema, `sti: subtype`, `sti_base: Transaction`, `sti_discriminator: type=payment`
+- Non-STI models: omit `sti` field entirely
+- Detection: multiple concrete models resolving to same table name
+- Coverage: both base and subtypes count as models
+- Schema ownership: base renders full table, subtypes link with "See [Base] for full schema"
+
+**Outcome:** STI convention fully encoded in spec. Foundation.md §5.3 added, conventions.md model enumeration updated, model-template.md has complete base/subtype templates.
+
+---

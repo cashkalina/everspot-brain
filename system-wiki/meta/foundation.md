@@ -156,7 +156,39 @@ Deliberately excluded (left to the source-fallback case): full method bodies, fr
 
 **What counts as a model** (for coverage): concrete (non-abstract) Eloquent classes in the module `Models/` directories and `app/Models/`. Abstract base classes are documented once as concepts, not counted as coverage. Pivot and polymorphic-intermediary models are documented only when they carry their own columns or business logic beyond a bare relationship link. The precise rule lives in `meta/conventions.md`.
 
-### 5.3 Model document template
+### 5.3 Single Table Inheritance (STI) pattern documentation
+
+When multiple concrete models share a single database table via Single Table Inheritance (discriminated by a `type` column), they are documented according to these rules:
+
+**Base model** (e.g., Transaction):
+- Owns and renders the **full shared-table schema** from the connection snapshot
+- Lists all subtypes in frontmatter: `sti_subtypes: [Payment, Refund, ...]` (derived from code analysis)
+- Frontmatter includes: `sti: base`
+- Documents base-level relationships, methods, scopes, and events
+- The schema table is rendered once in the base document only
+
+**Subtype models** (e.g., Payment, Refund):
+- Do **NOT** render the full schema table
+- Link to the base model for schema: "See [Transaction](./transaction.md) for full schema"
+- Document the discriminator value clearly: `type=payment`
+- Frontmatter includes: `sti: subtype`, `sti_base: Transaction`, `sti_discriminator: type=payment`
+- Document only subtype-specific content:
+  - Subtype-specific relationships (beyond inherited ones)
+  - Subtype-specific methods, scopes, and events
+  - Global scopes that filter to this subtype
+  - Casts or accessors unique to this subtype
+- Still link to the base document's table field: `table: transactions` (same as base)
+
+**Non-STI models:**
+- Omit the `sti` frontmatter field entirely (or use `sti: none`)
+- Render full schema as normal
+
+**Coverage and enumeration:**
+- Both base and subtypes count as models for coverage purposes
+- Each subtype is documented as a separate model file
+- STI hierarchies are detected by multiple concrete models resolving to the same table name
+
+### 5.4 Model document template
 
 ```markdown
 ---
@@ -217,7 +249,7 @@ Human-authored insight. Never overwritten by the agent. See §6.3.
 
 `built_at` plus `source_paths` plus the connection snapshot define currency; `last_updated` is a human-facing wall-clock timestamp only.
 
-### 5.4 System and module documentation
+### 5.5 System and module documentation
 
 Beyond models, the wiki makes a reasonable but shallow effort to document the system as a whole, primarily so model docs have canonical concepts to link to. Freshness for these is chosen per document: a doc that maps to a bounded set of files uses the same range check over those paths; a broad doc like `architecture.md`, where any path set is either noisy or lossy, uses a `review_after` date as its primary freshness mechanism, surfacing on a cadence rather than on every commit to a large directory.
 

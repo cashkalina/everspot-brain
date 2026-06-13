@@ -85,6 +85,10 @@ Human-authored insight. Never overwritten by the agent. See §6.3.
 - **completeness:** `complete`, `partial`, or `stub` (see `meta/conventions.md`)
 - **deprecated:** `true` if model has been removed from Everspot. If true, must include `successor:` field
 - **tags:** 2-4 tags from controlled vocabulary (see `meta/conventions.md`)
+- **sti:** (Optional) `base`, `subtype`, or omit for non-STI models
+- **sti_subtypes:** (STI base only) Array of subtype model names, e.g., `[Payment, Refund, Credit]`
+- **sti_base:** (STI subtype only) The base model name, e.g., `Transaction`
+- **sti_discriminator:** (STI subtype only) The discriminator column and value, e.g., `type=payment`
 
 ### Section Guidelines
 
@@ -117,3 +121,191 @@ Human-authored insight. Never overwritten by the agent. See §6.3.
 6. Validate Schema table against snapshot before committing
 7. Stamp `built_at` with the current `main` commit hash
 8. Update `last_updated` to current date
+
+---
+
+## STI (Single Table Inheritance) Templates
+
+### STI Base Model Template
+
+Use this template for the **base model** in an STI hierarchy (e.g., Transaction):
+
+```markdown
+---
+model: Transaction
+module: Transaction
+table: transactions
+connection: tenant
+sti: base
+sti_subtypes: [Payment, Refund, Credit]  # derived from code analysis
+source_paths:
+  - modules/Transaction/Models/Transaction.php
+  - modules/Transaction/Observers/TransactionObserver.php
+related: [Customer, Account]
+built_at: abc123def456
+last_updated: 2026-06-12
+completeness: complete
+deprecated: false
+tags: [financial, transaction, core]
+---
+
+# Transaction
+
+**Primary source:** `modules/Transaction/Models/Transaction.php`
+
+## Overview
+Base model for all transaction types in the system. Uses Single Table Inheritance with subtypes Payment, Refund, and Credit sharing the `transactions` table, discriminated by the `type` column.
+
+## Connection & Table
+Tenant · `transactions`
+
+## Schema
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | bigint unsigned | No | - | Primary key |
+| type | varchar(50) | No | - | STI discriminator (payment, refund, credit) |
+| customer_id | bigint unsigned | No | - | Foreign key to customers |
+| amount | decimal(10,2) | No | - | Transaction amount |
+| status | varchar(20) | No | pending | Transaction status |
+| created_at | timestamp | Yes | - | Creation timestamp |
+| updated_at | timestamp | Yes | - | Last update timestamp |
+<!-- rendered from schema/tenant.json -->
+
+## Properties / Casts
+```php
+protected $fillable = ['type', 'customer_id', 'amount', 'status'];
+protected $casts = ['amount' => 'decimal:2'];
+```
+
+## Relationships
+- `customer()` — belongs to [Customer](../customer/models/customer.md): the customer who owns this transaction
+
+## Key Methods
+- `process()` — abstract method implemented by subtypes to process the transaction
+
+## Scopes / Events / Observers
+- Observer: `TransactionObserver` registered in `EventServiceProvider`
+
+## STI Subtypes
+This model is the base for an STI hierarchy. See subtype documentation:
+- [Payment](./payment.md) — `type=payment`
+- [Refund](./refund.md) — `type=refund`
+- [Credit](./credit.md) — `type=credit`
+
+## Common Usage
+```php
+// Access all transactions
+$transactions = Transaction::all();
+
+// Access specific subtype
+$payments = Payment::all(); // automatically scoped to type=payment
+```
+
+<!-- human:begin -->
+## Business Logic Notes
+<!-- human:end -->
+```
+
+### STI Subtype Model Template
+
+Use this template for **subtype models** in an STI hierarchy (e.g., Payment):
+
+```markdown
+---
+model: Payment
+module: Transaction
+table: transactions  # same table as base
+connection: tenant
+sti: subtype
+sti_base: Transaction
+sti_discriminator: type=payment
+source_paths:
+  - modules/Transaction/Models/Payment.php
+  - modules/Transaction/Scopes/PaymentScope.php
+related: [Transaction, Customer, PaymentMethod]
+built_at: abc123def456
+last_updated: 2026-06-12
+completeness: complete
+deprecated: false
+tags: [financial, payment, transaction]
+---
+
+# Payment
+
+**Primary source:** `modules/Transaction/Models/Payment.php`
+
+## Overview
+Represents a payment transaction. Part of the Transaction STI hierarchy, sharing the `transactions` table with other transaction types and automatically scoped to `type=payment`.
+
+## Connection & Table
+Tenant · `transactions` (shared via STI)
+
+**See [Transaction](./transaction.md) for full schema.**
+
+## STI Details
+- **Base model:** [Transaction](./transaction.md)
+- **Discriminator:** `type=payment`
+- **Global scope:** Automatically filters to `WHERE type = 'payment'`
+
+## Properties / Casts
+Inherits casts from Transaction base model.
+
+Additional subtype-specific casts:
+```php
+protected $casts = [
+    'processed_at' => 'datetime',
+];
+```
+
+## Relationships
+**Inherited from Transaction:**
+- `customer()` — belongs to [Customer](../customer/models/customer.md)
+
+**Payment-specific:**
+- `paymentMethod()` — belongs to [PaymentMethod](./payment-method.md): the payment method used
+
+## Key Methods
+- `process()` — processes the payment transaction (implements abstract method from Transaction)
+- `refund()` — creates a Refund transaction for this payment
+
+## Scopes / Events / Observers
+- **Global scope:** `PaymentScope` automatically applies `WHERE type = 'payment'`
+- Boot method sets `type` attribute to `'payment'` on new instances
+
+## Common Usage
+```php
+// Create a payment
+$payment = Payment::create([
+    'customer_id' => $customer->id,
+    'amount' => 100.00,
+    'status' => 'pending'
+]);
+
+// Process payment
+$payment->process();
+
+// Issue refund
+$refund = $payment->refund();
+```
+
+<!-- human:begin -->
+## Business Logic Notes
+<!-- human:end -->
+```
+
+### STI Template Selection Rules
+
+**Use the base template when:**
+- The model is the parent class in an STI hierarchy
+- Multiple concrete models extend this model and share its table
+- The model owns the shared table schema
+
+**Use the subtype template when:**
+- The model extends another model (STI base)
+- The model shares a table with its parent
+- The model has a discriminator value (typically in a `type` column)
+- The model applies a global scope to filter to its discriminator value
+
+**Use the standard template when:**
+- The model does not participate in STI
+- The model has its own unique table

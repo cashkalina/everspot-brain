@@ -141,7 +141,39 @@ To find all models for coverage:
    - Not marked `abstract`
    - Not a trait (`trait` keyword)
 4. Apply the pivot/polymorphic column check
-5. The resulting set is the coverage baseline
+5. Detect STI hierarchies (see STI Detection below)
+6. The resulting set is the coverage baseline
+
+### STI Detection and Documentation Rules
+
+**Single Table Inheritance (STI)** occurs when multiple concrete models share the same database table, typically discriminated by a `type` column. Detect and document STI hierarchies as follows:
+
+**Detection:**
+- Treat models as an STI hierarchy when multiple concrete models resolve to the same table name
+- Typically: child model's `$table` property matches its parent's table
+- Or: child model has no explicit `$table` and inherits parent's table, but parent and child both share the same physical table
+
+**Table ownership:**
+- The **base model** (parent in the inheritance chain) owns the table
+- The base model's document renders the full schema from the connection snapshot
+- Subtype models reference the same table name in frontmatter but do NOT render the schema
+
+**Model enumeration:**
+- Both base and subtypes count as models for coverage purposes
+- Each subtype is documented as a separate model file
+- Example: Transaction (base) + Payment + Refund = 3 models documented, 3 coverage items
+
+**Naming and discriminator:**
+- Subtypes must clearly document their discriminator value (e.g., `type=payment`)
+- The discriminator column and value are typically found in:
+  - Global scopes applied in the subtype model
+  - Boot method setting default attribute values
+  - Explicit `$attributes` array in the model
+
+**Frontmatter requirements:**
+- Base model: `sti: base`, `sti_subtypes: [Payment, Refund, ...]` (derived from code)
+- Subtype model: `sti: subtype`, `sti_base: Transaction`, `sti_discriminator: type=payment`
+- Non-STI model: omit `sti` field (or `sti: none`)
 
 ## Freshness and Currency
 
