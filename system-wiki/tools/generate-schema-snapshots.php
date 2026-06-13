@@ -136,7 +136,9 @@ $skipPatterns = [
 
 // Extract central schema
 echo "==> Extracting central schema...\n";
-$centralSnapshot = extractSchema($app, 'central', $everspotCommit, $skipTables, $skipPatterns);
+// Everspot uses 'mysql' as the primary connection name (not 'central')
+$centralSnapshot = extractSchema($app, 'mysql', $everspotCommit, $skipTables, $skipPatterns);
+$centralSnapshot['connection'] = 'central'; // Label it as 'central' in the wiki snapshot
 
 // Ensure output directory exists
 ensureDirectoryExists(dirname($centralOutput));
@@ -281,8 +283,17 @@ function extractSchema($app, string $connection, string $commit, array $skipTabl
     $tables = [];
     $skippedTables = [];
 
+    // Get the actual database name for this connection
+    $databaseName = $db->getDatabaseName();
+
     foreach ($schema->getTables() as $table) {
         $tableName = $table['name'];
+
+        // CRITICAL: Laravel's Schema::getTables() returns tables from ALL databases
+        // Filter by the actual database for this connection
+        if (isset($table['schema']) && $table['schema'] !== $databaseName) {
+            continue;
+        }
 
         // Skip framework/noise tables
         if (shouldSkipTable($tableName, $skipTables, $skipPatterns)) {

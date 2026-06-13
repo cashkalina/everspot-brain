@@ -335,3 +335,31 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Throwaway databases ready for schema extraction. Tenant DB table count confirms complete migration across all modules.
 
 ---
+
+### Task 4: Generate Real Snapshots — COMPLETE
+
+**Goal:** Run standalone extractor against throwaway databases to produce real schema/central.json and schema/tenant.json.
+
+**Actions:**
+- Fixed extractor connection name: Everspot uses 'mysql' not 'central' for primary connection
+- Fixed critical bug: Laravel Schema::getTables() returns tables from ALL databases in MySQL server
+- Added database name filtering: only extract tables from the connected database
+- Temporarily pointed .env DB_DATABASE → wiki_scratch_central for central extraction
+- Ran extraction: php tools/generate-schema-snapshots.php --central --tenant --tenant-id 11b2f517...
+- Restored .env to everspot_test_workspace
+
+**Results:**
+- schema/central.json: 18 tables (users, tenants, domains, plans, features, permissions, roles, etc.)
+- schema/tenant.json: 152 tables (transactions, customers, orders, properties, certificates, mappings, etc.)
+- Skipped 7 framework tables per connection (migrations, jobs, nova_*, personal_access_tokens)
+- Snapshot commit: 86b4328c28 (Everspot origin/main)
+
+**Validation:**
+- Spot-checked transactions table: has id, transactionable_type, transactionable_id (polymorphic STI)
+- Spot-checked users table (central): has id, first_name, last_name
+- Central table count matches wiki_scratch_central (26 tables - 8 skipped = 18)
+- Tenant table count matches throwaway tenant (159 tables - 7 skipped = 152)
+
+**Outcome:** Real snapshots generated successfully. Central: 18 tables, Tenant: 152 tables. Data model complete.
+
+---
