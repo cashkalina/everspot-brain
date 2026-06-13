@@ -290,3 +290,48 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Standalone extractor operational. No Everspot writes required. WikiSchemaSnapshot.php obsolete (should be removed). Ready for Task 3 execution.
 
 ---
+
+### Task 3: Stand Up Throwaway Databases — COMPLETE
+
+**Goal:** Create throwaway databases (wiki_scratch_central + throwaway tenant) safely without touching real Everspot data.
+
+**Sub-agent:** general-purpose agent for database setup
+
+**Forbidden databases identified:**
+- everspot_test_workspace (central DB from .env)
+- tenant_* matching real tenant IDs (from tenancy config)
+
+**MySQL startup:**
+- Was not running (socket connection failed)
+- Started via `herd start`
+- Running on TCP 127.0.0.1:3306 (requires `-h 127.0.0.1` flag)
+
+**wiki_scratch_central creation:**
+- Created database: wiki_scratch_central
+- Temporarily modified .env DB_DATABASE → wiki_scratch_central
+- Ran central migrations: php artisan migrate --database=mysql --path=database/migrations --force
+- Table count: 26 tables (26 migrations executed)
+- Restored .env to everspot_test_workspace
+
+**Throwaway tenant creation:**
+- Method: Custom PHP script (Tenant::create + Domain::create)
+- Tenant ID: 11b2f517-e921-42f8-b2bd-36574bc5125a
+- Tenant name: wiki_scratch_tenant_test
+- Domain: wiki-scratch.test
+- Database: tenant_11b2f517-e921-42f8-b2bd-36574bc5125a
+- Created prerequisite plan (id: 1, slug: wiki-scratch-plan)
+- Manual DB creation + artisan tenants:migrate (event pipeline didn't auto-trigger from script)
+
+**Tenant database migration:**
+- Ran: php artisan tenants:migrate --tenants=11b2f517-e921-42f8-b2bd-36574bc5125a
+- Table count: 159 tables (COMPLETE data model, well above 50+ expected)
+- Includes all modules: Accounting, Order, Property, Customer, Transaction, Certificate, etc.
+
+**Validation:**
+- Central DB: 26 tables ✓
+- Tenant DB: 159 tables ✓ (complete coverage confirmed)
+- No forbidden databases touched ✓
+
+**Outcome:** Throwaway databases ready for schema extraction. Tenant DB table count confirms complete migration across all modules.
+
+---
