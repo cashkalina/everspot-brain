@@ -33,12 +33,36 @@ Model documentation location depends on the model's source location in Everspot:
 - Examples: `app/Models/User.php` → `system/models/user.md`
 - Frontmatter: `module: System`
 - These are core Laravel models used across the entire application (User, Tenant, Plan, Feature, etc.)
+- Connection typically: `central` (but verify against schema snapshots)
 
 **modules/*/Models/ → modules/*/models/**
 - Models in Everspot's module directories are documented under their respective module directory
 - Examples: `modules/Transaction/Models/Payment.php` → `modules/transaction/models/payment.md`
 - Frontmatter: `module: Transaction` (matches the module name)
 - These are module-specific domain models
+- Connection typically: `tenant` (but verify against schema snapshots)
+
+### Connection Determination Algorithm
+
+When documenting a model, determine its database connection using this algorithm:
+
+1. **Check explicit `$connection` property** in the model class
+   - If present, use that value (e.g., `protected $connection = 'central';`)
+
+2. **Check parent class** if model extends another model
+   - Inherited `$connection` applies to child unless overridden
+
+3. **Verify against schema snapshots** (authoritative)
+   - Table must exist in exactly one snapshot (schema/central.json or schema/tenant.json)
+   - If found in central.json → `connection: central`
+   - If found in tenant.json → `connection: tenant`
+   - If found in both: ERROR (table duplication issue in Everspot)
+   - If found in neither: snapshot may be stale, regenerate
+
+4. **Module context heuristic** (fallback if snapshots unavailable)
+   - app/Models/* → typically `central`
+   - modules/*/** → typically `tenant`
+   - Mark `completeness: partial` until verified against snapshot
 
 **BaseModel (abstract)**
 - Abstract base classes are documented as concepts in `system/models/` but not counted for coverage

@@ -77,9 +77,9 @@ Human-authored insight. Never overwritten by the agent. See §6.3.
 - **model:** The PHP class name (e.g., `Payment`, `TransactionItem`)
 - **module:** The module name if in `modules/`, or `Core` if in `app/Models/`
 - **table:** The database table name
-- **connection:** `central` or `tenant` — derived from which schema snapshot contains the table
+- **connection:** `central` or `tenant` — **Determination algorithm:** (1) Check model's `$connection` property if explicit, (2) Check parent class if inherited, (3) Verify against snapshots (table must exist in exactly one snapshot), (4) If ambiguous, check module context (app/Models typically central, modules/* typically tenant)
 - **source_paths:** List of all files this document derives from (model, traits, observers, relationship inverses). **Recomputed on every regeneration.**
-- **related:** List of model names this model has relationships to. Powers reverse-relationship lookups.
+- **related:** List of model names this model has Eloquent relationships to. **Inclusion rule:** Direct relationship methods (hasMany, belongsTo, etc.) whose target is a concrete Eloquent model documented in this wiki. Exclude: polymorphic targets (abstract types like "Transactionable"), models from external packages not documented here.
 - **built_at:** The `main` commit hash this document was generated against
 - **last_updated:** Human-readable date (YYYY-MM-DD). Informational only; actual currency is `built_at` + `source_paths` + snapshot
 - **completeness:** `complete`, `partial`, or `stub` (see `meta/conventions.md`)
@@ -98,10 +98,15 @@ Human-authored insight. Never overwritten by the agent. See §6.3.
 
 **Schema:** Rendered deterministically from the connection snapshot (`schema/central.json` or `schema/tenant.json`). Include markdown comment noting the source snapshot. Validated against snapshot before commit.
 
+**If snapshot unavailable or model generation precedes schema extraction:** Use descriptive placeholder listing expected columns derived from code analysis (migrations, model casts, fillable array). Mark with comment `<!-- Schema pending real snapshot extraction -->` and set `completeness: partial`.
+
 **Properties / Casts:** Document `$fillable`, `$guarded`, `$casts`, `$dates`, `$appends`, accessors (`get*Attribute`), and mutators (`set*Attribute`).
 
 **Relationships:** One bullet per relationship. Format:
 - `relationshipName()` — relationship type [LinkedModel](./path/to/model.md): description of what it represents
+
+For polymorphic relationships, document the abstract type and list known concrete types in prose:
+- `commentable()` — morphTo: The parent entity (may be Post, Product, or Customer)
 
 **Key Methods:** Public methods beyond standard Eloquent. Show signature and purpose, not full body.
 
