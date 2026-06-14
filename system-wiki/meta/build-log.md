@@ -413,3 +413,24 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** All throwaway resources cleaned up. No forbidden databases touched. Environment restored to pre-FIX state.
 
 ---
+
+## PRE-BOOTSTRAP FIX Pass — 2026-06-14
+
+**Goal:** Two focused fixes before bootstrap: (1) ensure schema snapshots have metadata wrapper, (2) route app/Models correctly to system/models/.
+
+---
+
+### Fix 1: Schema Snapshot Metadata — COMPLETE
+
+**Status:** ALREADY FIXED (no changes needed)
+
+**Verification:**
+- schema/central.json: ✓ Has snapshot_commit, generated_at, connection at top level (lines 2-4)
+- schema/tenant.json: ✓ Has snapshot_commit, generated_at, connection at top level (lines 2-4)
+- Both stamped with commit: 86b4328c28e8f0f8b1f0a0a84210b51ba08816d0
+- Current Everspot origin/main: 86b4328c28e8f0f8b1f0a0a84210b51ba08816d0 (matches)
+- tools/generate-schema-snapshots.php: ✓ Already emits wrapper (lines 317-329)
+
+**Outcome:** Both snapshots already had correct metadata from Task 4 (2026-06-12). Script already produces correct format. No action required. Everspot origin/main has not advanced since snapshots were generated.
+
+---
