@@ -27,7 +27,7 @@ Each module directory maps to a module in Everspot's `modules/` directory.
 
 ## Coverage
 
-To check which modules and models are documented, run the audit (see `meta/commands.md`).
+To check which modules and models are documented, run the audit (see `meta/commands/audit.md`).
 
 ---
 

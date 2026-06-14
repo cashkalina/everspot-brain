@@ -7,7 +7,7 @@ last_updated: 2026-06-12
 
 # Everspot System Wiki — Foundation
 
-This document defines what the Everspot System Wiki is, the principles it lives by, how it is structured, and how it is maintained. It is the foundational reference for the wiki; detailed command and prompt specifications live separately (`meta/commands.md`) and build on the model described here.
+This document defines what the Everspot System Wiki is, the principles it lives by, how it is structured, and how it is maintained. It is the foundational reference for the wiki; detailed command and prompt specifications live separately (`meta/commands/`) and build on the model described here.
 
 Where this document describes a mechanism whose exact implementation is still open (most notably how schema is extracted from Laravel), it states the intent and the shape, and leaves the precise mechanics to be settled and tested during implementation.
 
@@ -101,7 +101,7 @@ This requires the generation environment to have a **runnable Everspot with a mi
 A model document has two independent freshness inputs:
 
 - **Schema** comes from its connection's snapshot. The snapshot records the commit it was generated through; it is regenerated when new migrations appear in that connection's configured migration paths, and the regenerated snapshot is diffed to find which tables changed.
-- **Everything else** (behavior, relationships, methods) derives from a computed `source_paths` set — the model class, its traits and parent, observer registrations, and the inverse sides of its relationships. The set is not hand-maintained; the generate/sync step derives it and recomputes it on every regeneration. A document is current on this axis when `git log built_at..origin/main -- <source_paths>` returns nothing — a range form that is inherently ancestry-aware and so correct across merges.
+- **Everything else** (behavior, relationships, methods) derives from a computed source set — the model class (`primary_source`), its parent, observer registrations, and the inverse sides of its relationships (`source_paths`), plus its traits (the `traits:` field, resolved to source paths through the trait registry). None of it is hand-maintained; the generate/sync step derives and recomputes it on every regeneration. A document is current on this axis when `git log built_at..origin/main -- <the union of those paths>` returns nothing — a range form that is inherently ancestry-aware and so correct across merges.
 
 A document is current when both hold: its table is unchanged in the latest snapshot and no commit since `built_at` touches its `source_paths`. Because `source_paths` is itself derived and can miss a newly added dependency, **freshness is re-derived from current `main`, not trusted from the stored set, wherever it is checked** (§6.1, §7) — closing the gap where a new migration or newly added trait would otherwise leave a document reporting current while stale.
 
@@ -152,7 +152,7 @@ everspot-system-wiki/
     ├── foundation.md           # this document
     ├── conventions.md          # naming, tag vocabulary, completeness + model-enumeration rules
     ├── model-template.md       # standard model-doc template
-    ├── commands.md             # detailed command/prompt specs
+    ├── commands/              # detailed command/prompt specs (one per command + index.md)
     ├── runbook.md              # how to run the write operations
     └── wiki-state.json         # committed: synced_through, canonical_branch
 ```
@@ -171,14 +171,21 @@ Each concept is documented once, and everything else links to it. A model's own 
 
 ### 5.2 What a model document contains
 
+Connection and table are carried in **frontmatter** (`connection:`, `table:`), not a body section. The `primary_source` field names the single model class file; `source_paths` lists every other derived file (parent, observers, providers, relationship inverses) excluding the primary and excluding traits; `traits:` lists the model's traits; `related_models:` denormalizes every relationship target so reverse-relationship lookups are trustworthy.
+
+The body uses a **deterministic section skeleton** — a mandatory floor always present (rendered `_None._` when empty so absence is a trusted answer) plus an optional ceiling. The mandatory floor:
+
 - **Overview** — what the model represents and its business role (AI-owned prose).
-- **Connection & Table** — central or tenant, and the table name.
-- **Schema** — every column (name, type, nullability, default, description), rendered from the connection snapshot.
-- **Properties / casts / accessors / mutators**.
-- **Relationships** — each relationship, what it means, and a **link** to the related model's document. Related model names are also denormalized into frontmatter so reverse-relationship lookups are trustworthy.
-- **Key methods** — signature and purpose, not full bodies.
-- **Scopes**, **events/observers**, **common usage** (a few examples).
+- **Schema** — every column (name, type, nullability, default, description), rendered from the connection snapshot. Trait-contributed columns remain (they physically exist) but carry a provenance marker linking to the trait doc.
+- **Casts**, **Attributes** (fillable/guarded/hidden/visible/appends/defaults), **Accessors & Mutators** — split so each is independently locatable. Trait-contributed casts are deferred to the trait doc.
+- **Traits** — one bullet per trait: a link to the global trait registry plus the per-model role. Trait behavior is documented once (registry → module-owned deep doc), never re-explained per model.
+- **Relationships** — each relationship, what it means, and a **link** to the related model's document.
+- **Scopes**, **Events**, **Observers** — split into three dedicated sections (Observers especially, since they register outside the model file).
+- **Key methods** — public business-logic methods only; signature and purpose, not full bodies.
+- **Common usage** — a few examples.
 - **Business logic notes** — human-authored insight not derivable from code (§6.3).
+
+Optional sections appear only when relevant: **STI Details**, **Routing**, **Factory & Seeders**, **Multi-Tenancy Notes** (deviations only). The exact skeleton, ordering, and per-section rules live in `meta/model-template.md` and `meta/conventions.md`.
 
 Deliberately excluded (left to the source-fallback case): full method bodies, framework boilerplate, anything purely mechanical the agent can retrieve directly.
 
@@ -238,7 +245,7 @@ Maintenance is **manual** for now — a deliberate choice to observe the process
 2. Gather every commit on `main` since `synced_through`.
 3. If new migrations appear in any connection's migration paths, regenerate that connection's schema snapshot and diff it to find changed tables.
 4. Map changes to affected documents using the changed files, the changed tables, and each document's **re-derived** `source_paths` (not the stored set), so a new migration, trait, or observer maps to the docs that depend on it.
-5. For each affected document: recompute `source_paths` and `related`, regenerate derivable content (rendering Schema from the snapshot), validate structured sections against source (§6.5), and stamp `built_at`.
+5. For each affected document: recompute `primary_source`, `source_paths`, `traits`, and `related_models`, regenerate derivable content (rendering Schema from the snapshot), validate structured sections against source (§6.5), and stamp `built_at`.
 6. Handle the full lifecycle (§6.2) and human-content reconciliation (§6.3).
 7. Advance `synced_through` — but **only past changes whose affected documents were successfully regenerated**. Sync is resumable: on partial failure it does not advance past the unfinished work, reports the failed documents, and reprocesses them next run. This prevents a skipped document's new dependency from becoming a permanent blind spot.
 
@@ -281,7 +288,7 @@ Semantic MECE violations are explicitly *not* a guaranteed output, per §5.1.
 
 ## 8. Command Set (Conceptual)
 
-Described conceptually here; detailed prompts live in `meta/commands.md`. Write commands are run only by the single maintainer (§3.5).
+Described conceptually here; detailed prompts live in `meta/commands/`. Write commands are run only by the single maintainer (§3.5).
 
 - **Bootstrap** *(write)* — the initial full build: generate snapshots and a document for every model, set the first `synced_through`. Idempotent and resumable, since a run over the full model set is long enough to be interrupted.
 - **Sync** *(write)* — the incremental update of §6.1.

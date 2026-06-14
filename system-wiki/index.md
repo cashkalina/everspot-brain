@@ -42,7 +42,7 @@ Navigate via the structure above. Model documents live in `modules/[module-name]
 
 Run the audit to check coverage, staleness, and link integrity:
 ```
-See meta/commands.md for audit command
+See meta/commands/audit.md for audit command
 ```
 
 ## Maintenance

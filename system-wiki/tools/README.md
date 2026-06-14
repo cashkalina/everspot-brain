@@ -173,7 +173,7 @@ php tools/extract-model-skeleton.php app/Models/User.php > draft.md
 
 ## Integration with Sync
 
-The `sync` command (see `meta/commands.md` §3) uses these tools:
+The `sync` command (see `meta/commands/sync.md`) uses these tools:
 
 1. Detects migration changes by monitoring database/migrations/ paths
 2. Regenerates affected snapshot (central.json or tenant.json)
@@ -194,6 +194,6 @@ The `sync` command (see `meta/commands.md` §3) uses these tools:
 
 ## See Also
 
-- `meta/commands.md` — Full command specifications for Generate, Sync, Snapshot-schema
+- `meta/commands/` — Full command specifications (one file per command); see `meta/commands/index.md`
 - `meta/foundation.md` — Authoritative design spec and architecture
 - `meta/conventions.md` — Model enumeration rules, STI detection, naming conventions

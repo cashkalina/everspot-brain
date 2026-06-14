@@ -38,7 +38,7 @@ Three separate git repositories are in play — don't conflate them:
    ```
    Everything outside these markers is AI-owned and regenerated freely.
 
-4. **Always re-derive `source_paths`.** A document's source set (model file, traits, parent, observers, relationship inverses) is computed, not hand-maintained. Re-derive it on every update and when checking freshness — never trust the stored list, or a new trait/migration becomes a blind spot.
+4. **Always re-derive the source set.** A document's source set — `primary_source` (the model file), `source_paths` (parent, observers, relationship inverses), and `traits` (tracked via the registry) — is computed, not hand-maintained. Re-derive all three on every update and when checking freshness — never trust the stored fields, or a new trait/migration becomes a blind spot.
 
 5. **Validate before committing.** Diff the Schema table against the connection snapshot (`schema/central.json` / `schema/tenant.json`) and cross-check relationships and method signatures against parsed source. Block the commit on mismatch.
 
@@ -54,15 +54,15 @@ Read the **specific** sections below — not all of foundation.md. Foundation is
 
 | Task | Read first |
 |------|-----------|
-| **Bootstrap** | `commands.md` Bootstrap · foundation.md §6.1, §6.5 |
-| **Sync** | `commands.md` Sync · foundation.md §6 (workflow, lifecycle, validation) |
-| **Snapshot schema** | `commands.md` Snapshot · foundation.md §3.3 |
+| **Bootstrap** | `commands/bootstrap.md` · foundation.md §6.1, §6.5 |
+| **Sync** | `commands/sync.md` · foundation.md §6 (workflow, lifecycle, validation) |
+| **Snapshot schema** | `commands/snapshot-schema.md` · foundation.md §3.3 |
 | **Generate/Update a model doc** | `model-template.md` · `conventions.md` · foundation.md §5.2–5.4 |
-| **Audit** | `commands.md` Audit · foundation.md §7 |
-| **Review coverage** | `commands.md` Review coverage · foundation.md §6.4 |
+| **Audit** | `commands/audit.md` · foundation.md §7 |
+| **Review coverage** | `commands/review-coverage.md` · foundation.md §6.4 |
 | **A judgment call the rules don't cover** | foundation.md §2 (principles), §3 (architecture) |
 
-Operational write steps will live in `meta/runbook.md` (planned — not yet written; until then use `commands.md` + `build-log.md`). When falling back to Everspot source, log it (see "Coverage Feedback").
+Operational write steps will live in `meta/runbook.md` (planned — not yet written; until then use `commands/` specs + `build-log.md`). When falling back to Everspot source, log it (see "Coverage Feedback").
 
 ## Where Things Live
 
@@ -70,13 +70,14 @@ Operational write steps will live in `meta/runbook.md` (planned — not yet writ
 system-wiki/
 ├── schema/            # Committed schema snapshots: central.json, tenant.json
 ├── system/            # Cross-cutting system docs + core app/Models docs (system/models/)
-├── modules/           # PRIMARY FOCUS — one folder per module, each with models/
+│   └── traits/        # Global trait registry (index.md) — lookup → module-owned deep docs
+├── modules/           # PRIMARY FOCUS — one folder per module, each with models/ (and traits/ for module-owned traits)
 ├── tools/             # PHP extractors (see "Tools" below) + README.md
 └── meta/
     ├── foundation.md      # AUTHORITATIVE SPEC — read first
     ├── conventions.md     # Naming, tags, completeness + coverage rules
     ├── model-template.md  # Standard model-doc template
-    ├── commands.md        # Detailed command/prompt specs
+    ├── commands/          # Detailed command/prompt specs (one file per command + index.md)
     ├── build-log.md       # Append-only log of the build process
     ├── runbook.md         # How to run write operations (PLANNED — not yet written)
     └── wiki-state.json    # Committed: synced_through, canonical_branch
@@ -88,10 +89,10 @@ Naming: module folders and model files are kebab-case versions of their PHP name
 
 A model document is current when **both** hold:
 1. Its table is unchanged in the latest snapshot for its connection.
-2. No commit since `built_at` touches any file in its **re-derived** `source_paths`:
-   `git log <built_at>..origin/main -- <source_paths>` returns nothing.
+2. No commit since `built_at` touches any file in its **re-derived** source set — the union of `primary_source`, `source_paths`, and the trait files resolved from the `traits:` field (via `system/traits/index.md`):
+   `git log <built_at>..origin/main -- <that union>` returns nothing.
 
-Re-derive `source_paths` from current `main` wherever freshness is checked — never trust the stored set. See foundation.md §3.4.
+Re-derive the full source set (primary_source + source_paths + traits) from current `main` wherever freshness is checked — never trust the stored fields. See foundation.md §3.4.
 
 ## What to Document
 
@@ -107,7 +108,7 @@ When you must read Everspot source directly to answer a question (because the wi
 
 ## Commands
 
-Detailed prompts in `meta/commands.md`:
+Detailed prompts in `meta/commands/`:
 
 - **Bootstrap** *(write)* — initial full build; idempotent and resumable.
 - **Sync** *(write)* — incremental update from new commits; resumable.

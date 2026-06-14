@@ -1,13 +1,13 @@
 ---
 title: Wiki Conventions
-purpose: Naming, tags, completeness rules, model enumeration
-version: 1
-last_updated: 2026-06-12
+purpose: Naming, tags, completeness rules, model enumeration, section structure, traits
+version: 2
+last_updated: 2026-06-14
 ---
 
 # Wiki Conventions
 
-This document defines the naming conventions, controlled tag vocabulary, completeness definitions, and model-enumeration rules for the Everspot System Wiki.
+This document defines the naming conventions, controlled tag vocabulary, section structure, trait-documentation rules, completeness definitions, and model-enumeration rules for the Everspot System Wiki.
 
 ## Naming Conventions
 
@@ -70,6 +70,68 @@ When documenting a model, determine its database connection using this algorithm
 ### Link Conventions
 - Use relative links within the wiki: `[Payment](./payment.md)`, `[Customer](../customer/models/customer.md)`
 - Links to Everspot source are written as paths relative to Everspot repo root: `modules/Transaction/Models/Payment.php`
+- **Link every relationship target that is a documented model.** Forward links to not-yet-written docs are allowed and expected during bootstrap (the path is correct even if the file is pending). A bare model name where a link belongs is a defect.
+
+## Model Document Section Structure
+
+Model docs use a **deterministic section skeleton**: a fixed mandatory floor that is always present, plus an extensible optional ceiling. The canonical template and per-section guidance live in `meta/model-template.md`; this section states the *rules* the template embodies.
+
+### The Mandatory Floor (always present)
+
+These sections appear in **every** model doc, in this order, even when empty:
+
+1. Overview
+2. Schema
+3. Casts
+4. Attributes
+5. Accessors & Mutators
+6. Traits
+7. Relationships
+8. Scopes
+9. Events
+10. Observers
+11. Key Methods
+12. Common Usage
+13. Business Logic Notes (human block)
+
+**Rule:** A missing mandatory section is a documentation defect. An empty mandatory section is rendered with an explicit placeholder — `_None._`, or a section-appropriate variant such as `_None registered._` for Observers — because the empty state is itself a valid, trusted answer. This is what lets an AI conclude "this model has no observers" from `## Observers → _None registered._` instead of going to hunt service providers.
+
+**Why these are split out.** Scopes, Events, and Observers each answer a distinct question and (especially Observers) are often registered *outside* the model file, so they get dedicated anchors rather than being lumped together. Casts, Attributes, and Accessors & Mutators are likewise split so mass-assignment/visibility, type-casting, and computed attributes are each locatable without scanning a combined block.
+
+### The Optional Ceiling (present only when they have content)
+
+These appear only when relevant. **Absence is unambiguous: no section means the feature is absent.** When in doubt about one of these for a given model, consult the relevant `system/` doc, not the model doc.
+
+- **STI Details** — STI base/subtype models only (see STI rules below)
+- **Routing** — only if `getRouteKeyName()` or custom route-model binding exists
+- **Factory & Seeders** — pointer to factory/seeder paths, only if one exists
+- **Multi-Tenancy Notes** — only when the model *deviates* from the default tenant pattern. Default tenant/central behavior is carried by the `connection:` frontmatter and documented once in `system/multi-tenancy.md`; per-model notes are for exceptions.
+
+New model-specific sections may be added beyond this list when content genuinely demands. The floor guarantees determinism; the ceiling lets the doc match reality.
+
+**Validation** is intentionally **not** in the skeleton for now (validation lives in FormRequests/rule classes outside the model). Revisit after bootstrap if it proves needed.
+
+## Traits Documentation
+
+Trait behavior is documented **once** and linked everywhere it is used, per the DRY rule (foundation §5.1). It is never re-explained inside each model doc.
+
+### Three pieces
+
+1. **Global registry — `system/traits/index.md`.** One entry per trait used in the codebase: the trait's short name (as a heading anchor), a one-line description, the owning module, and a link to the trait's deep doc. This is the single lookup table: model doc → registry → deep doc.
+
+2. **Deep trait doc — in the owning module.** The full explanation of a trait lives with the module that owns it, e.g. `modules/common/traits/has-files.md` for `modules/Common/Traits/HasFiles.php`. It documents what the trait does, the columns/casts/scopes/relationships it contributes, and any required configuration. The registry links to it.
+
+3. **Per-model `## Traits` section + `traits:` frontmatter.** Each model lists its traits (mechanically, from `use` statements) in the `traits:` frontmatter, and the body `## Traits` section gives one bullet per trait: a link to the registry entry plus a **one-line role specific to that model** (e.g. "HasFiles — stores deed scans"). No capability re-explanation.
+
+### How trait effects surface in the model doc
+
+- **Columns** a trait contributes (e.g. `deleted_at` from `SoftDeletes`, audit columns) **stay in the Schema table** — they physically exist in the snapshot, so the table remains complete and validatable — but carry a **provenance marker** in the Description column, e.g. `(via SoftDeletes — see trait doc)` linking to the registry.
+- **Casts** a trait contributes are **omitted** from the model's Casts section and deferred to the trait doc.
+- Behavior (scopes, events, methods, relationships) a trait contributes is documented in the trait doc, not duplicated per model; the model's `## Traits` link is the pointer.
+
+### Freshness and source tracking
+
+Trait files are tracked for currency via the `traits:` field (resolved to source paths through the registry), **not** by listing them in `source_paths`. Freshness checks union `primary_source` + `source_paths` + the trait source paths. Re-derive the trait list from the model's `use` statements on every regeneration.
 
 ## Controlled Tag Vocabulary
 
@@ -104,24 +166,25 @@ Tags are used in model document frontmatter to enable semantic grouping and sear
 Model documents are marked with one of three completeness levels in frontmatter:
 
 ### complete
-All required sections are filled with meaningful content:
+All mandatory-floor sections are present and filled with meaningful content (empty ones explicitly rendered `_None._`), and:
 - Overview (non-trivial, explains business purpose)
-- Connection & Table
-- Schema (rendered from snapshot)
-- Properties / Casts (if any exist in model)
-- Relationships (all relationships documented with links)
-- Key Methods (all public methods beyond standard Eloquent)
-- Scopes / Events / Observers (if any exist)
+- Schema (rendered from snapshot; trait columns carry provenance markers)
+- Casts / Attributes / Accessors & Mutators (each present; `_None._` where the model has none)
+- Traits (each trait linked to the registry with a per-model role)
+- Relationships (**every** relationship to a documented model is linked; `related_models:` frontmatter is in sync with the body)
+- Scopes / Events / Observers (each present; `_None._` / `_None registered._` where applicable)
+- Key Methods (all public business-logic methods beyond standard Eloquent)
 - Common Usage (at least one example)
 
 Business Logic Notes may be empty if no human insight has been added yet.
 
 ### partial
-Document exists with basic structure, but one or more derived sections are missing or incomplete:
-- Schema is rendered but relationships are not fully documented
+Document exists with the section skeleton, but one or more derived sections are missing or incomplete:
+- Schema is rendered but relationships are not fully documented or not linked
 - Some methods are documented but others are missing
 - No usage examples provided
-- Related models are listed but links are broken
+- Relationship targets are named but not linked, or `related_models:` is out of sync with the body
+- A mandatory section is absent (rather than present-but-`_None._`)
 
 ### stub
 Only frontmatter and minimal structure exist:
@@ -151,8 +214,8 @@ Do not document (or count as coverage gaps):
 
 2. **Traits**
    - Example: `HasRefunds.php`, `Auditable.php`
-   - Document trait behavior within the models that use them
-   - Add traits to the model's `source_paths` for currency tracking
+   - Trait behavior is documented **once** in the global registry (`system/traits/index.md`) plus a deep doc in the trait's owning module — not re-explained inside each model that uses it (see "Traits Documentation" above)
+   - List traits in the model's `traits:` frontmatter (not `source_paths`); they are tracked for currency via the registry
 
 3. **Pivot models without columns or logic**
    - Bare pivot tables that only hold foreign keys (e.g., `customer_service` with only `customer_id` and `service_id`)

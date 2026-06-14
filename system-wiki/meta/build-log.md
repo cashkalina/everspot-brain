@@ -523,3 +523,62 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Documentation consolidated into canonical homes (CLAUDE.md, tools/README.md, build-log.md). Process artifacts ready for deletion. No file references a to-be-deleted path.
 
 ---
+
+## Model-Doc Structure Revision (pre-bootstrap) — 2026-06-14
+
+**Goal:** Revise the model-doc template/structure based on review of the sample `customer.md`, before bootstrapping all ~150 models, so the bootstrap produces docs in the final shape.
+
+**Driver:** Human review of `modules/customer/models/customer.md`. Decisions made interactively with the user.
+
+**Decisions (codified across template, conventions, foundation §5.2, commands §2, CLAUDE.md):**
+
+1. **`primary_source` frontmatter** — the single model class file moves into frontmatter; the `**Primary source:**` body line is removed. `source_paths` now holds *only* the other derived files (excludes primary and excludes traits).
+2. **`related:` → `related_models:`** — renamed for clarity (not "maybe related"). Still mechanically derived from relationship targets in the body; must stay in sync with the Relationships section.
+3. **Drop body `## Connection & Table`** — connection/table live in frontmatter only.
+4. **Traits: registry + module-owned deep docs.** New `traits:` frontmatter (short names, from `use`). Global registry at `system/traits/index.md` (name → description → owning module → source path → deep-doc link). Deep docs live in the **owning module** (`modules/<module>/traits/`); framework traits' notes live in `system/traits/`. Body `## Traits` section = link to registry + one-line per-model role. Trait behavior never re-explained per model. Trait files tracked for freshness via the `traits:` field/registry, NOT `source_paths`.
+5. **Section skeleton split + made deterministic.** Old combined sections split into: `## Casts`, `## Attributes`, `## Accessors & Mutators`, and `## Scopes` / `## Events` / `## Observers` (three separate). Mandatory floor (13 sections) is ALWAYS present, empty → `_None._` / `_None registered._`, so absence is a trusted answer. Optional ceiling (STI Details, Routing, Factory & Seeders, Multi-Tenancy Notes) appears only when relevant. Validation intentionally omitted for now.
+6. **Trait-contributed columns stay in Schema** (rendered from snapshot, so they physically appear) but carry a provenance marker in the Description column, e.g. `(via SoftDeletes — see trait doc)`. Trait-contributed **casts are omitted** from the Casts section (deferred to trait doc).
+
+**Files changed:** `meta/model-template.md` (v2, full rewrite + STI templates), `meta/conventions.md` (v2: section-structure rules, traits-documentation rules, completeness criteria, link rule), `meta/foundation.md` §5.2 + §3.4 + §6 field refs, `meta/commands.md` §2.1/2.4/2.5/2.5b/2.6 + sync mapping + update refs, `CLAUDE.md` (Where Things Live, Freshness, Core Rule 4).
+
+**Created:** `system/traits/index.md` (registry seeded with the 9 traits Customer uses; deep docs stubbed `_pending_`).
+
+**Not yet done:** Reworking `customer.md` itself to the new structure (deferred — spec-first was chosen). Writing the per-trait deep docs. These follow next.
+
+**Outcome:** Spec layer fully updated to the new model-doc structure. Bootstrap will now generate docs in the final shape.
+
+---
+
+## Trait Deep-Doc Generation (Bootstrap behavior) — 2026-06-14
+
+**Goal:** Make Bootstrap unambiguously build out trait deep docs (not just stub them), and decide how/when.
+
+**Driver:** Question — would Bootstrap know to build out the trait docs as discussed? Answer at the time: no, §2.5b permitted stubs. Resolved with the user.
+
+**Decisions:**
+1. **Trait deep docs are built lazily on first use** — but implemented as **existence/currency-based**, not ordering-based, so it is deterministic and resumable: the first model whose generation finds a trait's deep doc missing triggers the build; subsequent uses are no-ops. No model needs to know it is "first."
+2. **Trait-doc generation is a first-class command** (`§2b Generate trait doc`) in commands.md, reusable by Generate (lazy), Sync (on trait file change), and on demand. Deep doc lives in the owning module (`modules/<module>/traits/`) for module-owned traits, `system/traits/` for framework traits. It extracts purpose, contributed columns/casts/relationships/scopes/methods, and configuration/contract from source; updates the registry row (replacing `_pending_`).
+
+**Files changed:** `meta/commands.md` — new §2b; §1 overview + write-ops list; §2.5b rewritten to call §2b existence-based; §3.3 Sync trait clause invokes §2b; §6.1 Audit gains trait-doc coverage check; §6.2 staleness re-derives full source set incl. traits; §8 Bootstrap process + resumability + outputs note lazy build (version bumped to v2).
+
+**Outcome:** A Bootstrap run will, by the time all models are generated, have built-out deep docs for every trait used by any model, plus a complete registry — with no separate trait phase and safe under interruption/resume.
+
+---
+
+## Split commands.md into meta/commands/ — 2026-06-14
+
+**Goal:** Replace the 911-line monolith `meta/commands.md` with one file per command, matching the wiki's one-concept-per-file structure and the per-command access pattern already implied by CLAUDE.md's task-routing table.
+
+**Driver:** Question — why is everything in one file? The access pattern is already per-command (you run one command per operation; CLAUDE.md routes to individual commands), so the monolith forced loading ~800 irrelevant lines per use. Decided with the user: split now (pre-bootstrap), using stable **descriptive named anchors** (not section numbers) for cross-references.
+
+**Done (via a Sonnet subagent, then verified):**
+- Created `meta/commands/` with `index.md` (overview §1 + execution principles §9 + meta-doc relationships §10 + summary table §11 + command list) and one file per command: `generate.md`, `generate-trait-doc.md`, `sync.md`, `snapshot-schema.md`, `update.md`, `audit.md`, `review-coverage.md`, `bootstrap.md`.
+- Dropped numeric prefixes from `###` subsection headings so anchors are descriptive/stable (e.g. `### Derive primary_source, source_paths, and traits`). Rewrote every intra-doc `§X.Y` reference as a cross-file or same-file anchor link. Textual `foundation §X` mentions left as prose (foundation unchanged).
+- Deleted `meta/commands.md` (`git rm`).
+- Updated all inbound references: `CLAUDE.md` (routing table, Where Things Live tree, prose), `meta/foundation.md` (intro, structure tree, §8 pointer), `tools/README.md` (×2), root `index.md`, `modules/index.md`. Left `meta/build-log.md` historical mentions as-is.
+
+**Verification:** all 6 cross-file anchors resolve to real headings; no `(§` left in command files; no `commands.md` refs outside build-log.
+
+**Outcome:** Commands are now per-file, lean to load, and individually versionable. Pure refactor — no spec wording changed.
+
+---
