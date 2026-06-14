@@ -21,4 +21,8 @@ These models are distinguished from module-specific models which live in `module
 
 ## Documented Models
 
-_None yet documented._ System models (User, Tenant, Plan, Feature, …) will be generated during Bootstrap.
+| Model | Table | Connection | Description |
+|-------|-------|------------|-------------|
+| [Feature](./feature.md) | `features` | central | Capability flag / typed key-value pair belonging to a Plan |
+| [Plan](./plan.md) | `plans` | central | Subscription tier; groups Feature records; assigned to each Tenant |
+| [User](./user.md) | `users` | central | Central admin/staff account; auth, 2FA, Sanctum tokens (NOT the tenant-side user) |
