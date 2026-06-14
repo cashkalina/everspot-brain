@@ -1,24 +1,24 @@
 ---
-title: Core Models
+title: System Models
 purpose: Documentation for models in app/Models/
-module: Core
-last_updated: 2026-06-12
+module: System
+last_updated: 2026-06-14
 ---
 
-# Core Models
+# System Models
 
 This directory contains documentation for Eloquent models in Everspot's `app/Models/` directory — the core Laravel models that are used across the entire application.
 
 ## Overview
 
-Core models typically include:
+System models typically include:
 - User and authentication models
 - Tenant models (for multi-tenancy)
+- Plan and feature models
 - System-wide foundational models
-- Models used by multiple modules
 
 These models are distinguished from module-specific models which live in `modules/*/Models/`.
 
----
+## Documented Models
 
-**Status:** Placeholder directory for Phase 1. Model documents will be created during bootstrap/sync operations.
+- [User](./user.md) — System users with authentication and tenant access (central)

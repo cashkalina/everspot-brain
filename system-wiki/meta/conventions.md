@@ -24,6 +24,25 @@ This document defines the naming conventions, controlled tag vocabulary, complet
   - `Transaction` module → `modules/transaction/`
   - `CustomerManagement` module → `modules/customer-management/`
 
+### Model Documentation Placement (Routing Rule)
+
+Model documentation location depends on the model's source location in Everspot:
+
+**app/Models/ → system/models/**
+- Models in Everspot's `app/Models/` directory are documented under `system/models/<model-name>.md`
+- Examples: `app/Models/User.php` → `system/models/user.md`
+- Frontmatter: `module: System`
+- These are core Laravel models used across the entire application (User, Tenant, Plan, Feature, etc.)
+
+**modules/*/Models/ → modules/*/models/**
+- Models in Everspot's module directories are documented under their respective module directory
+- Examples: `modules/Transaction/Models/Payment.php` → `modules/transaction/models/payment.md`
+- Frontmatter: `module: Transaction` (matches the module name)
+- These are module-specific domain models
+
+**BaseModel (abstract)**
+- Abstract base classes are documented as concepts in `system/models/` but not counted for coverage
+
 ### Link Conventions
 - Use relative links within the wiki: `[Payment](./payment.md)`, `[Customer](../customer/models/customer.md)`
 - Links to Everspot source are written as paths relative to Everspot repo root: `modules/Transaction/Models/Payment.php`

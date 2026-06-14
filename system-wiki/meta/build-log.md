@@ -434,3 +434,33 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 **Outcome:** Both snapshots already had correct metadata from Task 4 (2026-06-12). Script already produces correct format. No action required. Everspot origin/main has not advanced since snapshots were generated.
 
 ---
+
+### Fix 2: app/Models Placement Routing — COMPLETE
+
+**Problem:** User model (from app/Models/User.php) was incorrectly documented at modules/core/models/user.md under a "Core" module that doesn't exist in Everspot.
+
+**Root cause:** Early documentation pass didn't distinguish between app/Models/ (system-wide) and modules/*/Models/ (module-specific).
+
+**Actions:**
+- Verified User model is in app/Models/ (Everspot has 4 models: BaseModel, Feature, Plan, User)
+- Moved modules/core/models/user.md → system/models/user.md
+- Updated user.md frontmatter: `module: Core` → `module: System`
+- Updated system/models/index.md: title "Core Models" → "System Models", added User to documented models list
+- Updated 2 meta files referencing old path (NEW-SESSION-BRIEFING.md, FIX-AND-VALIDATE-REPORT.md)
+- Deleted empty modules/core/ directory tree
+- Added routing rule to meta/conventions.md §2.3: app/Models/ → system/models/ (module: System), modules/*/Models/ → modules/*/models/ (module: <ModuleName>)
+
+**Routing rule:**
+- app/Models/User.php → system/models/user.md (module: System)
+- modules/Transaction/Models/Payment.php → modules/transaction/models/payment.md (module: Transaction)
+
+**Verification:**
+- modules/core/ directory: deleted ✓
+- system/models/user.md: exists with module: System ✓
+- system/models/index.md: links to user.md ✓
+- Inbound references updated in 2 meta files ✓
+- conventions.md: routing rule added at §2.3 ✓
+
+**Outcome:** app/Models placement routing rule encoded in conventions.md. User doc moved to correct location. No bogus "Core" module remains.
+
+---

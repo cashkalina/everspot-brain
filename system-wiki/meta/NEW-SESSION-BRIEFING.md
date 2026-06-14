@@ -106,7 +106,7 @@ You are working in the **Everspot System Wiki** — an AI-maintained, searchable
 - Standard model documentation (no STI)
 - Complete relationships, methods, scopes
 
-**modules/core/models/user.md** (central model)
+**system/models/user.md** (central model)
 - 17-column schema table rendered from central.json
 - Central connection confirmed
 - Two-factor authentication fields documented

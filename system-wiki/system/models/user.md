@@ -1,6 +1,6 @@
 ---
 model: User
-module: Core
+module: System
 table: users
 connection: central
 source_paths:

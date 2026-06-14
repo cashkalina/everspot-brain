@@ -346,7 +346,7 @@ This reduced tenant extraction from 552 tables (all DBs) to 152 tables (correct 
 - No STI fields (plain model) ✓
 - Full 17-column schema table rendered from central.json
 
-**File Path:** `/Users/cashkalina/code/everspot-brain/system-wiki/modules/core/models/user.md`
+**File Path:** `/Users/cashkalina/code/everspot-brain/system-wiki/system/models/user.md`
 
 **Before/After:**
 - Before: Placeholder template with no real schema
@@ -493,7 +493,7 @@ The complete documentation pipeline is now validated and operational across all 
 - `modules/transaction/models/transaction.md` - STI base, 31-column schema ✓
 - `modules/transaction/models/payment.md` - STI subtype linking to Transaction ✓
 - `modules/customer/models/customer.md` - Plain tenant model, 27-column schema ✓
-- `modules/core/models/user.md` - Central model, 17-column schema ✓
+- `system/models/user.md` - Central model, 17-column schema ✓
 
 ### Build Tracking
 - `meta/build-log.md` - Complete FIX-AND-VALIDATE pass log
