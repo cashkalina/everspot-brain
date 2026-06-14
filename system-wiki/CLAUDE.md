@@ -21,7 +21,7 @@ Three separate git repositories are in play — don't conflate them:
 
 ## Current State
 
-**Pre-bootstrap.** Schema snapshots (`schema/`) and tooling (`tools/`) exist; only a handful of sample model docs are written and `meta/wiki-state.json` has `synced_through: null`. **Do not assume the wiki is populated** — most models are not yet documented, so most questions cannot be answered from the wiki today. The next major operation is **Bootstrap** (full build). After bootstrap, update this section to "operational; maintain via Sync."
+**Operational; maintain via Sync.** Bootstrap Phase 1 complete as of 2026-06-14 — all concrete Eloquent models across `app/Models/` and `modules/*/Models/` are documented. `meta/wiki-state.json` stamped with `synced_through: 86b4328c28e8f0f8b1f0a0a84210b51ba08816d0` (Everspot origin/main at bootstrap). Ongoing: run **Sync** when new commits arrive; run **Audit** for known stragglers (HasTransactions/HasTransactionService deep docs needed; TrustingSchedule and SignatureRequest may be missing SoftDeletes; RecognitionArrangement stale cast).
 
 ## Core Operating Rules
 
