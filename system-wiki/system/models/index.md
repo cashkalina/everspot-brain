@@ -21,4 +21,4 @@ These models are distinguished from module-specific models which live in `module
 
 ## Documented Models
 
-- [User](./user.md) — System users with authentication and tenant access (central)
+_None yet documented._ System models (User, Tenant, Plan, Feature, …) will be generated during Bootstrap.

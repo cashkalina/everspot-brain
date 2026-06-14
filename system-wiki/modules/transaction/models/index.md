@@ -10,13 +10,13 @@ This directory contains documentation for all models in the Transaction module.
 
 ## Documented Models
 
-### Phase 4 — Complete Vertical Slice
-- **[Payment](./payment.md)** — Customer payment transactions *(completeness: partial)*
+_None yet documented._ All Transaction module model docs will be generated during Bootstrap.
 
 ### Pending Documentation
 The following models have been discovered in the Transaction module but not yet documented:
 
 - **Transaction** — Base transaction model (STI parent) — `modules/Transaction/Models/Transaction.php`
+- **Payment** — Customer payment transactions — `modules/Transaction/Models/Payment.php`
 - **Refund** — Refund transactions — `modules/Transaction/Models/Refund.php`
 - **PaymentMethod** — Stored payment methods — `modules/Transaction/Models/PaymentMethod.php`
 - **PaymentMethodRequest** — Payment method addition requests — `modules/Transaction/Models/PaymentMethodRequest.php`
