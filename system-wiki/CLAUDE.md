@@ -140,3 +140,36 @@ Detailed prompts live in `meta/commands.md`. Core commands:
 - Keep the wiki DRY internally (no concept in two places)
 - Never commit derived artifacts without validation
 - Measure currency against real dependencies (commits + snapshots)
+
+## Key Tools and Their Purpose
+
+**Schema Snapshots (schema/central.json, schema/tenant.json):**
+- Generated from real Everspot databases via `tools/generate-schema-snapshots.php`
+- Stamped with snapshot_commit (Everspot origin/main hash) for drift detection
+- Central: ~18 tables (users, tenants, roles, permissions, plans)
+- Tenant: ~152 tables (complete data model: transactions, customers, orders, properties, etc.)
+- Regenerate when migrations change using standalone extractor
+
+**Model Skeleton Generator (tools/extract-model-skeleton.php):**
+- Extracts mechanical parts from model source (frontmatter, properties, methods, relationships)
+- Reads via git show origin/main:<path>
+- Outputs partial markdown with AI sections marked <!-- AI: ... -->
+- Handles STI inheritance (separates "Defined in X" vs "Inherited from Y")
+- Usage: `php tools/extract-model-skeleton.php <model-path>`
+
+## STI (Single Table Inheritance) Pattern
+
+When multiple models share one table (discriminated by type column):
+
+**Base Model (e.g., Transaction):**
+- Frontmatter: `sti: base`, `sti_subtypes: [Payment, Refund]`
+- Renders FULL schema table from snapshot (owns the shared table documentation)
+- Lists subtypes with discriminator values
+
+**Subtype Model (e.g., Payment):**
+- Frontmatter: `sti: subtype`, `sti_base: Transaction`, `sti_discriminator: type=payment`
+- Links to base for schema ("See [Transaction](./transaction.md) for full schema")
+- Documents ONLY subtype-specific relationships/methods/scopes
+- NO duplicate schema table
+
+Both base and subtypes count as separate models for coverage.

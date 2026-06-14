@@ -334,6 +334,8 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 
 **Outcome:** Throwaway databases ready for schema extraction. Tenant DB table count confirms complete migration across all modules.
 
+**Note:** Detailed phase3 investigation, blocker analysis, and extraction strategy documentation originally in phase3-build-log.md, phase3-summary.md, phase3-schema-generation-blocker.md have been consolidated here. Key items: (1) standalone extractor design prevents Everspot writes, (2) database name filtering critical to avoid cross-DB contamination (reduced 552 tables to correct 152), (3) tenant context requires stancl/tenancy initialization, (4) migration path mapping should be re-derived from config/tenancy.php when Sync is implemented (not stored in JSON).
+
 ---
 
 ### Task 4: Generate Real Snapshots — COMPLETE
@@ -412,6 +414,8 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 
 **Outcome:** All throwaway resources cleaned up. No forbidden databases touched. Environment restored to pre-FIX state.
 
+**Note:** FINAL-BUILD-REPORT.md and FIX-AND-VALIDATE-REPORT.md contained comprehensive build summaries now superseded by this build-log. Unique findings folded: (1) Foundation.md proved comprehensive with no inconsistencies, (2) Template validation identified 4 clarifications needed: `related[]` field scope (direct Eloquent only), polymorphic type listing (document in prose), connection determination algorithm (check $connection → parent → snapshot), schema placeholder format (list expected columns from code analysis). These became convention updates in FIX pass.
+
 ---
 
 ## PRE-BOOTSTRAP FIX Pass — 2026-06-14
@@ -462,5 +466,60 @@ This is an append-only log of the autonomous wiki build process. Each phase reco
 - conventions.md: routing rule added at §2.3 ✓
 
 **Outcome:** app/Models placement routing rule encoded in conventions.md. User doc moved to correct location. No bogus "Core" module remains.
+
+---
+
+## CLEANUP Pass — 2026-06-14
+
+**Goal:** Remove build-session clutter before bootstrap by consolidating documentation and deleting process artifacts.
+
+**Principle:** FOLD BEFORE DELETE — extract unique content into canonical homes before deletion.
+
+**Actions:**
+
+1. **Consolidated NEW-SESSION-BRIEFING.md → CLAUDE.md:**
+   - Added "Key Tools and Their Purpose" section (schema snapshots, skeleton generator)
+   - Added "STI Pattern" section (base vs subtype rules, examples)
+   - NEW-SESSION-BRIEFING was primarily STATUS (what's done), not OPERATING INSTRUCTIONS
+   - CLAUDE.md remains concise auto-loaded operator guide
+
+2. **Consolidated tenant-context-notes.md + extract-model-skeleton-README.md → tools/README.md:**
+   - Replaced obsolete WikiSchemaSnapshot.php documentation with generate-schema-snapshots.php
+   - Added multi-tenancy context section (stancl/tenancy mechanics, connection handling)
+   - Added extract-model-skeleton.php complete documentation (purpose, usage, limitations)
+   - Added integration points with Sync command
+   - tools/README.md now single comprehensive tools reference
+
+3. **Consolidated phase3 files into build-log.md:**
+   - phase3-build-log.md, phase3-summary.md, phase3-schema-generation-blocker.md → build-log.md Phase 3 section
+   - Added note capturing unique details: database name filtering bug fix, migration path re-derivation rule
+   - Build-log Phase 3 section already had the essential facts
+
+4. **Consolidated report artifacts into build-log.md:**
+   - FINAL-BUILD-REPORT.md and FIX-AND-VALIDATE-REPORT.md → build-log.md consolidation note
+   - Folded unique finding: foundation.md validation results, template clarification needs
+
+5. **Deleted meta/migration-path-mapping.json:**
+   - NOT used by any working tools (verified: no references in tools/*.php)
+   - Encoded early incomplete tenant-migration discovery
+   - When Sync is implemented, it should re-derive migration paths from config/tenancy.php dynamically
+   - Build-log.md note added to capture this decision
+
+**Files to delete after consolidation:**
+- meta/NEW-SESSION-BRIEFING.md (folded → CLAUDE.md)
+- meta/tenant-context-notes.md (folded → tools/README.md)
+- tools/extract-model-skeleton-README.md (folded → tools/README.md)
+- meta/phase3-build-log.md (folded → build-log.md)
+- meta/phase3-summary.md (folded → build-log.md)
+- meta/phase3-schema-generation-blocker.md (folded → build-log.md)
+- meta/FINAL-BUILD-REPORT.md (folded → build-log.md)
+- meta/FIX-AND-VALIDATE-REPORT.md (folded → build-log.md)
+- meta/migration-path-mapping.json (re-derivation rule documented)
+
+**generate-snapshots.sh resolution:**
+- Verified: already uses current standalone generate-schema-snapshots.php (line 85)
+- Wrapper is useful and current — KEEP
+
+**Outcome:** Documentation consolidated into canonical homes (CLAUDE.md, tools/README.md, build-log.md). Process artifacts ready for deletion. No file references a to-be-deleted path.
 
 ---
