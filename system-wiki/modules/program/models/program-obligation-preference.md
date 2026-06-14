@@ -10,11 +10,6 @@ source_paths:
   - modules/Program/Models/ProgramPreferenceCollectionOption.php
 traits:
   - HasByUserFields
-  - LogsActivity
-  - HasExternalIds
-  - HasIcon
-  - HasModelDefinition
-  - HasModificationRules
 related_models: [ProgramObligationPreferenceCollection, ProgramPreferenceCollectionOption]
 built_at: 86b4328c28e8f0f8b1f0a0a84210b51ba08816d0
 last_updated: 2026-06-14
@@ -77,11 +72,6 @@ _None._
 ## Traits
 
 - [HasByUserFields](../../../system/traits/index.md#hasbyuserfields) — `createdBy()` / `updatedBy()` / `deletedBy()` audit stamps backing the `created_by` / `updated_by` / `deleted_by` columns
-- [HasExternalIds](../../../system/traits/index.md#hasexternalids) — polymorphic external identifier storage (inherited via BaseModel)
-- [HasIcon](../../../system/traits/index.md#hasicon) — Bootstrap Icon class lookup for this model type (inherited via BaseModel)
-- [HasModelDefinition](../../../system/traits/index.md#hasmodeldefinition) — resolves the `ModelDefinition` instance for this model (inherited via BaseModel)
-- [HasModificationRules](../../../system/traits/index.md#hasmodificationrules) — lifecycle gate: `canBeEdited()`, `canBeDeleted()`, etc. (inherited via BaseModel)
-- [LogsActivity](../../../system/traits/index.md#logsactivity) — auto-logs create/update/delete events via Spatie Activitylog (inherited via BaseModel)
 
 ## Relationships
 

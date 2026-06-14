@@ -20,11 +20,6 @@ traits:
   - HasMoneyFields
   - HasRecognition
   - HasTrusting
-  - LogsActivity
-  - HasExternalIds
-  - HasIcon
-  - HasModelDefinition
-  - HasModificationRules
   - Repeatable
 related_models: [Cemetery, Customer, GlAccount, Product, Program, ProgramObligation]
 built_at: 86b4328c28e8f0f8b1f0a0a84210b51ba08816d0
@@ -138,14 +133,9 @@ _None._
 
 - [HasByUserFields](../../../system/traits/index.md#hasbyuserfields) — `createdBy()` / `updatedBy()` / `deletedBy()` audit stamps backing the `created_by` / `updated_by` / `deleted_by` columns
 - [HasDateStatusFields](../../../system/traits/index.md#hasdatestatusfields) — date-driven fulfillment status from the sale/constructive/delivery/cancellation/certificate issuance/PIF date columns; scopes `open()` and `notCanceled()`
-- [HasExternalIds](../../../system/traits/index.md#hasexternalids) — polymorphic external identifier storage (inherited via BaseModel)
-- [HasIcon](../../../system/traits/index.md#hasicon) — Bootstrap Icon class lookup for this model type (inherited via BaseModel)
-- [HasModelDefinition](../../../system/traits/index.md#hasmodeldefinition) — resolves the `ModelDefinition` instance for this model (inherited via BaseModel)
-- [HasModificationRules](../../../system/traits/index.md#hasmodificationrules) — lifecycle gate: `canBeEdited()`, `canBeDeleted()`, etc. (inherited via BaseModel)
 - [HasMoneyFields](../../../system/traits/index.md#hasmoneyfields) — transparent cents-to-dollars conversion for all money columns
 - [HasRecognition](../../../system/traits/index.md#hasrecognition) — Recognition module integration: polymorphic `RecognitionArrangement`/`RecognitionElement` relationships; config stored in `recognition_config`
 - [HasTrusting](../../../system/traits/index.md#hastrusting) — Trust module integration: polymorphic `TrustArrangement`/`TrustElement` relationships; config stored in `trusting_config`
-- [LogsActivity](../../../system/traits/index.md#logsactivity) — auto-logs create/update/delete events via Spatie Activitylog (inherited via BaseModel)
 - [Repeatable](../../../system/traits/index.md#repeatable) — recurrence scheduling via polymorphic `Repetition` model; two named groups: `payment` (single repetition) and `obligation` (single repetition)
 
 ## Relationships

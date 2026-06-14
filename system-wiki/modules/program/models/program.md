@@ -15,11 +15,6 @@ source_paths:
 traits:
   - HasByUserFields
   - HasMoneyFields
-  - LogsActivity
-  - HasExternalIds
-  - HasIcon
-  - HasModelDefinition
-  - HasModificationRules
   - Repeatable
 related_models: [Cemetery, GlAccount, Product, ProgramPreferenceCollection]
 built_at: 86b4328c28e8f0f8b1f0a0a84210b51ba08816d0
@@ -97,12 +92,7 @@ Programs are typed using the `Type` enum (`regular` or `perpetual`), scoped to o
 ## Traits
 
 - [HasByUserFields](../../../system/traits/index.md#hasbyuserfields) — `createdBy()` / `updatedBy()` / `deletedBy()` audit stamps backing the `created_by` / `updated_by` / `deleted_by` columns
-- [HasExternalIds](../../../system/traits/index.md#hasexternalids) — polymorphic external identifier storage (inherited via BaseModel)
-- [HasIcon](../../../system/traits/index.md#hasicon) — Bootstrap Icon class lookup for this model type (inherited via BaseModel)
-- [HasModelDefinition](../../../system/traits/index.md#hasmodeldefinition) — resolves the `ModelDefinition` instance for this model (inherited via BaseModel)
-- [HasModificationRules](../../../system/traits/index.md#hasmodificationrules) — lifecycle gate: `canBeEdited()`, `canBeDeleted()`, etc. (inherited via BaseModel)
 - [HasMoneyFields](../../../system/traits/index.md#hasmoneyfields) — transparent cents-to-dollars conversion for `payment_amt`, `obligation_price`, `obligation_cost`, `min_balance`, `max_balance`
-- [LogsActivity](../../../system/traits/index.md#logsactivity) — auto-logs create/update/delete events via Spatie Activitylog (inherited via BaseModel)
 - [Repeatable](../../../system/traits/index.md#repeatable) — recurrence scheduling via polymorphic `Repetition` model; two named groups: `payment` (single repetition) and `obligation` (single repetition)
 
 ## Relationships
