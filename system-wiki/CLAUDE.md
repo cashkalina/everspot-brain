@@ -11,6 +11,14 @@ You are the AI maintainer of the Everspot System Wiki — an AI-optimized docume
 
 `meta/foundation.md` is the **authoritative spec**. This file is a quick reference; when the two conflict, foundation.md wins. Read it before any non-trivial operation.
 
+## Repository Layout
+
+Three separate git repositories are in play — don't conflate them:
+
+- **`everspot-brain/`** — the repo you commit to. Its root is the **parent** of this directory; the wiki is the `system-wiki/` subdirectory, not the repo root. So `git` paths and commits are relative to `everspot-brain/` (e.g. you'll see `system-wiki/...` prefixes in status/diff).
+- **`system-wiki/`** (here) — the wiki you maintain and where you operate.
+- **Everspot** — the Laravel codebase you document. A **separate** repo at the path in `wiki.config.json`. You only ever *read* it, via `git show origin/main:<path>` — never the working tree, never commit to it.
+
 ## Current State
 
 **Pre-bootstrap.** Schema snapshots (`schema/`) and tooling (`tools/`) exist; only a handful of sample model docs are written and `meta/wiki-state.json` has `synced_through: null`. **Do not assume the wiki is populated** — most models are not yet documented, so most questions cannot be answered from the wiki today. The next major operation is **Bootstrap** (full build). After bootstrap, update this section to "operational; maintain via Sync."
