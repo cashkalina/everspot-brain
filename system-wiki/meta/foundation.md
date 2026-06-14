@@ -11,6 +11,34 @@ This document defines what the Everspot System Wiki is, the principles it lives 
 
 Where this document describes a mechanism whose exact implementation is still open (most notably how schema is extracted from Laravel), it states the intent and the shape, and leaves the precise mechanics to be settled and tested during implementation.
 
+## Section Map
+
+Read the section a task needs rather than the whole document. `CLAUDE.md`'s "Where to Start" table routes here; the numbers below are the canonical anchors those references point at — keep them in sync when sections move.
+
+| § | Section | What it covers |
+|---|---------|----------------|
+| 1 | Purpose | What the wiki is and who consumes it |
+| 2 | Guiding Principles | The "why" behind the design; judgment-call basis |
+| 3.1 | Two repositories | Canonical branch, reading source via git |
+| 3.2 | Search | Native grep, no manifest or server |
+| 3.3 | Schema snapshots | How schema is captured per connection |
+| 3.4 | Freshness | The currency check (snapshot + `source_paths` range) |
+| 3.5 | Operating model | Single writer, many readers |
+| 4 | Repository Structure | Directory tree and naming |
+| 5.1 | DRY and MECE | Internal duplication discipline |
+| 5.2 | Model document contents | What a model doc includes; coverage rule |
+| 5.3 | STI pattern | Base vs. subtype documentation |
+| 5.4 | Model template | Pointer to `meta/model-template.md` |
+| 5.5 | System & module docs | Lighter-depth non-model docs |
+| 6.1 | Sync workflow | Step-by-step incremental update |
+| 6.2 | Lifecycle | Create / update / deprecate |
+| 6.3 | Human-authored content | Marked blocks, invalidation flagging |
+| 6.4 | Coverage feedback loop | Fallback log and review |
+| 6.5 | Validation gate | Pre-commit structured checks |
+| 7 | The Audit | Read-only staleness/coverage/link report |
+| 8 | Command Set | Conceptual command overview |
+| 9 | Scope and Evolution | What's now vs. later |
+
 ---
 
 ## 1. Purpose
@@ -190,64 +218,9 @@ When multiple concrete models share a single database table via Single Table Inh
 
 ### 5.4 Model document template
 
-```markdown
----
-model: Payment
-module: Transaction
-table: payments
-connection: tenant            # central | tenant (derived from which snapshot holds the table)
-source_paths:                 # computed; recomputed on every regeneration
-  - modules/Transaction/Models/Payment.php
-  - modules/Transaction/Models/Concerns/HasRefunds.php
-  - app/Providers/EventServiceProvider.php
-related: [Transaction, Refund, Customer]   # derived; powers reverse-relationship lookups
-built_at: <main commit this document was generated against>
-last_updated: 2026-06-12       # informational only; currency is built_at + sources + snapshot
-completeness: complete         # complete | partial | stub (rule-based; see conventions)
-deprecated: false              # if true, requires `successor:`
-tags: [financial, payment, core]   # controlled vocabulary
----
+The canonical template lives in **`meta/model-template.md`** — the single source for the frontmatter schema and section order. Copy it for every new model document; do not maintain a second copy here.
 
-# Payment
-
-**Primary source:** `modules/Transaction/Models/Payment.php`
-
-## Overview
-What this model represents and why it exists. AI-owned.
-
-## Connection & Table
-Tenant · `payments`
-
-## Schema
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| ...    | ...  | ...      | ...     | ...         |
-<!-- rendered from schema/tenant.json; validated against it before commit -->
-
-## Properties / Casts
-...
-
-## Relationships
-- `transaction()` — belongs to [Transaction](./transaction.md): the parent financial record.
-
-## Key Methods
-- `process()` — ...
-
-## Scopes / Events / Observers
-...
-
-## Common Usage
-```php
-// representative examples
-```
-
-<!-- human:begin -->
-## Business Logic Notes
-Human-authored insight. Never overwritten by the agent. See §6.3.
-<!-- human:end -->
-```
-
-`built_at` plus `source_paths` plus the connection snapshot define currency; `last_updated` is a human-facing wall-clock timestamp only.
+Key invariant: `built_at` plus `source_paths` plus the connection snapshot define currency; `last_updated` is a human-facing wall-clock timestamp only.
 
 ### 5.5 System and module documentation
 

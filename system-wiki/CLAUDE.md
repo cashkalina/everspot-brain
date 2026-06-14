@@ -1,175 +1,115 @@
 ---
 title: Standing Operating Instructions for Claude Code
 purpose: AI maintainer guide
-version: 1
-last_updated: 2026-06-12
+version: 2
+last_updated: 2026-06-14
 ---
 
 # Claude Code: Operating Instructions
 
-You are the AI maintainer of the Everspot System Wiki. This document defines your role and operating constraints. Read `meta/foundation.md` for the full specification.
+You are the AI maintainer of the Everspot System Wiki — an AI-optimized documentation repository for Everspot, a Laravel-based cemetery management system. Your job is to keep model documentation current, accurate, and searchable.
 
-## Your Role
+`meta/foundation.md` is the **authoritative spec**. This file is a quick reference; when the two conflict, foundation.md wins. Read it before any non-trivial operation.
 
-You maintain an AI-optimized documentation repository for Everspot, a Laravel-based cemetery management system. Your primary job is to keep model documentation current, accurate, and searchable. You are a **single writer** — the only entity that commits changes to this wiki.
+## Current State
+
+**Pre-bootstrap.** Schema snapshots (`schema/`) and tooling (`tools/`) exist; only a handful of sample model docs are written and `meta/wiki-state.json` has `synced_through: null`. **Do not assume the wiki is populated** — most models are not yet documented, so most questions cannot be answered from the wiki today. The next major operation is **Bootstrap** (full build). After bootstrap, update this section to "operational; maintain via Sync."
 
 ## Core Operating Rules
 
-### 1. Never Overwrite Human Content
-Human-authored content lives in explicitly marked blocks:
-```markdown
-<!-- human:begin -->
-## Business Logic Notes
-[Human insight goes here]
-<!-- human:end -->
-```
+1. **Code is truth; the wiki is its projection.** Every document derives from definitive Everspot source and records what it derives from. Never claim authority over the code.
 
-**Never modify or regenerate content inside these markers.** All other content is AI-owned and you regenerate it freely.
+2. **Read Everspot via git, never the working tree.** Use `git show origin/main:<path>`. This documents only merged, canonical code regardless of local branch state. The Everspot repo location is in `wiki.config.json` (machine-local, gitignored); shared state is in `meta/wiki-state.json`.
 
-### 2. Read Everspot via Git
-Always read Everspot source using `git show origin/main:<path>`, never from the working tree. This ensures you document only merged, canonical code regardless of local branch state.
+3. **Never overwrite human content.** Human insight lives in marked blocks and is never modified or regenerated:
+   ```markdown
+   <!-- human:begin -->
+   ## Business Logic Notes
+   [Human insight goes here]
+   <!-- human:end -->
+   ```
+   Everything outside these markers is AI-owned and regenerated freely.
 
-The Everspot repository location is in `wiki.config.json` (machine-local, gitignored). Shared state lives in `meta/wiki-state.json`.
+4. **Always re-derive `source_paths`.** A document's source set (model file, traits, parent, observers, relationship inverses) is computed, not hand-maintained. Re-derive it on every update and when checking freshness — never trust the stored list, or a new trait/migration becomes a blind spot.
 
-### 3. Always Re-derive Source Paths
-A document's `source_paths` list (the model file, traits, observers, relationship inverses) is computed, not hand-maintained. **Re-derive this set on every update** by analyzing the model's dependencies. Never trust the stored list when checking freshness — a new trait or migration could be missed.
+5. **Validate before committing.** Diff the Schema table against the connection snapshot (`schema/central.json` / `schema/tenant.json`) and cross-check relationships and method signatures against parsed source. Block the commit on mismatch.
 
-### 4. Validate Before Committing
-Before committing a regenerated document:
-- Diff the Schema table against the connection snapshot (`schema/central.json` or `schema/tenant.json`)
-- Cross-check relationships and method signatures against parsed source
-- Block commit on mismatch
+6. **Single writer.** You are the only entity that commits to this wiki. Write operations (bootstrap, sync, snapshot, generate/update) run against `origin/main`. Readers consume read-only.
 
-### 5. Follow the Single-Writer Model
-Write operations (sync, snapshot, generate, update) run against `origin/main` and are performed only by you (or CI in future). Readers consume the wiki read-only.
+7. **Deprecate, never delete.** When a model is removed, mark its doc `deprecated: true`, add a `successor:` pointer if one exists, and fix/flag inbound links. Renames, splits, and merges require human confirmation; keep deprecated docs with their Business Logic Notes intact until a human reassigns them.
+
+8. **DRY internally.** Document each concept once and link everywhere else. A model's full schema lives only in its own doc (deliberately duplicated *from code*); references to other models are links. Cross-cutting concepts (multi-tenancy, auth, integrations) are written once in `system/`.
+
+## Where to Start (by task)
+
+Read the **specific** sections below — not all of foundation.md. Foundation is the full spec + rationale; load the slice the task needs.
+
+| Task | Read first |
+|------|-----------|
+| **Bootstrap** | `commands.md` Bootstrap · foundation.md §6.1, §6.5 |
+| **Sync** | `commands.md` Sync · foundation.md §6 (workflow, lifecycle, validation) |
+| **Snapshot schema** | `commands.md` Snapshot · foundation.md §3.3 |
+| **Generate/Update a model doc** | `model-template.md` · `conventions.md` · foundation.md §5.2–5.4 |
+| **Audit** | `commands.md` Audit · foundation.md §7 |
+| **Review coverage** | `commands.md` Review coverage · foundation.md §6.4 |
+| **A judgment call the rules don't cover** | foundation.md §2 (principles), §3 (architecture) |
+
+Operational write steps will live in `meta/runbook.md` (planned — not yet written; until then use `commands.md` + `build-log.md`). When falling back to Everspot source, log it (see "Coverage Feedback").
 
 ## Where Things Live
 
 ```
 system-wiki/
-├── schema/                      # Committed schema snapshots (central.json, tenant.json)
-├── system/                      # Cross-cutting system docs
-│   ├── index.md
-│   └── models/                  # Core app/Models documentation
-├── modules/                     # PRIMARY FOCUS — one folder per module
-│   └── [module-name]/
-│       ├── index.md
-│       └── models/
-│           ├── index.md
-│           └── [model-name].md
-└── meta/                        # Wiki's own documentation
-    ├── foundation.md            # AUTHORITATIVE SPEC (read this first)
-    ├── conventions.md           # Naming, tags, completeness rules
-    ├── model-template.md        # Standard model document template
-    ├── commands.md              # Detailed command specifications
-    ├── runbook.md               # How to run write operations
-    └── wiki-state.json          # Committed: synced_through, canonical_branch
+├── schema/            # Committed schema snapshots: central.json, tenant.json
+├── system/            # Cross-cutting system docs + core app/Models docs (system/models/)
+├── modules/           # PRIMARY FOCUS — one folder per module, each with models/
+├── tools/             # PHP extractors (see "Tools" below) + README.md
+└── meta/
+    ├── foundation.md      # AUTHORITATIVE SPEC — read first
+    ├── conventions.md     # Naming, tags, completeness + coverage rules
+    ├── model-template.md  # Standard model-doc template
+    ├── commands.md        # Detailed command/prompt specs
+    ├── build-log.md       # Append-only log of the build process
+    ├── runbook.md         # How to run write operations (PLANNED — not yet written)
+    └── wiki-state.json    # Committed: synced_through, canonical_branch
 ```
 
-Naming: module folders and model files are kebab-case versions of PHP names. Every directory has an `index.md`.
+Naming: module folders and model files are kebab-case versions of their PHP names. Every directory has an `index.md`.
 
-## How Documents Stay Current
+## Freshness
 
-A model document is current when:
-1. Its table is unchanged in the latest schema snapshot for its connection
-2. No commits since `built_at` have touched any file in its **re-derived** `source_paths`
+A model document is current when **both** hold:
+1. Its table is unchanged in the latest snapshot for its connection.
+2. No commit since `built_at` touches any file in its **re-derived** `source_paths`:
+   `git log <built_at>..origin/main -- <source_paths>` returns nothing.
 
-Check this with: `git log <built_at>..origin/main -- <source_paths>`
-
-The connection snapshot records the commit it was generated through. Regenerate when new migrations appear.
+Re-derive `source_paths` from current `main` wherever freshness is checked — never trust the stored set. See foundation.md §3.4.
 
 ## What to Document
 
-Document every **concrete (non-abstract) Eloquent model** in:
-- `modules/*/Models/`
-- `app/Models/`
+Every **concrete (non-abstract) Eloquent model** in `modules/*/Models/` and `app/Models/`. Abstract base classes are documented once as concepts (not counted for coverage). Pivot/polymorphic models are documented only if they carry columns or logic beyond a bare relationship. Full rules: `meta/conventions.md` ("What Counts as a Model"). Document contents follow `meta/model-template.md`.
 
-Abstract base classes are documented once as concepts, not counted for coverage. Pivot/polymorphic models are documented only if they have columns or logic beyond a bare relationship.
+## STI (Single Table Inheritance)
 
-Each model document includes:
-- Overview (AI-owned prose)
-- Connection & table
-- Full schema (rendered from snapshot)
-- Properties, casts, accessors, mutators
-- Relationships (with links to related model docs)
-- Key methods (signatures and purpose, not full bodies)
-- Scopes, events, observers
-- Common usage examples
-- Business Logic Notes (human-authored, never overwrite)
+When multiple concrete models share one table (discriminated by a `type` column): the **base** model owns and renders the full schema table and lists subtypes (`sti: base`, `sti_subtypes: [...]`); each **subtype** links to the base for schema and documents only subtype-specific relationships/methods/scopes (`sti: subtype`, `sti_base:`, `sti_discriminator: type=...`), with no duplicate schema table. Both base and subtypes count as separate models for coverage. Full rules: foundation.md §5.3.
 
-See `meta/model-template.md` for the exact template.
+## Coverage Feedback
 
-## DRY and MECE
+When you must read Everspot source directly to answer a question (because the wiki can't), append an entry to the gitignored fallback log `wiki.fallback.log`: the topic, the doc(s) consulted, and the source read. The **Review coverage** command analyzes this log to propose missing docs, sections, or links.
 
-Document each concept once; link everywhere else. A model's full schema lives in its own document; references to other models are links. Cross-cutting concepts (multi-tenancy, auth, integrations) are written once in `system/` and linked to.
+## Commands
 
-## Deprecation, Not Deletion
+Detailed prompts in `meta/commands.md`:
 
-When a model is removed from Everspot, **deprecate its document** — don't delete it. Mark `deprecated: true`, add a `successor:` pointer if one exists, and fix or flag inbound links. Hard deletes break navigation.
+- **Bootstrap** *(write)* — initial full build; idempotent and resumable.
+- **Sync** *(write)* — incremental update from new commits; resumable.
+- **Snapshot schema** *(write)* — regenerate per-connection snapshots from a live DB.
+- **Generate / Update model** *(write)* — create or regenerate a single model doc.
+- **Audit** *(read-only)* — coverage, staleness, broken links, deprecations, invalidated notes.
+- **Review coverage** *(read-only)* — analyze the fallback log; propose improvements.
 
-Renames, splits, and merges require human confirmation. Keep deprecated documents with their Business Logic Notes intact until a human reassigns those notes.
+## Tools
 
-## When You Cannot Answer from the Wiki
+**Schema snapshots** (`schema/central.json`, `schema/tenant.json`) — generated from live Everspot databases via `tools/generate-schema-snapshots.php`, stamped with `snapshot_commit` (Everspot `origin/main` hash) for drift detection. Central ≈ 18 tables; tenant ≈ 152. Regenerate when migrations change.
 
-If you must read Everspot source directly to answer a question, log it: append an entry to your local fallback log (gitignored, `*.fallback.log`) noting the topic, documents consulted, and source read. This feeds the coverage improvement loop.
-
-## Search
-
-Use Claude Code's native tools (Grep, Glob, Read). Structured lookups ("every model in a module," "what relates to Customer") are answered by grepping YAML frontmatter. No separate search index exists.
-
-## The Authoritative Spec
-
-This document is a quick reference. For the full specification, architecture decisions, and rationale, read `meta/foundation.md`. When in doubt, foundation.md is authoritative.
-
-## Commands You Run
-
-Detailed prompts live in `meta/commands.md`. Core commands:
-
-- **Bootstrap** (write) — initial full build
-- **Sync** (write) — incremental update from new commits
-- **Snapshot schema** (write) — regenerate schema snapshots
-- **Generate/Update model** (write) — create or regenerate a single model document
-- **Audit** (read-only) — report coverage, staleness, broken links, deprecated docs
-- **Review coverage** (read-only) — analyze fallback log, propose improvements
-
-## Your Constraints
-
-- Optimize for AI consumption, not human presentation
-- The code is truth; the wiki is its projection
-- Structured facts are rendered and validated, not improvised
-- Keep the wiki DRY internally (no concept in two places)
-- Never commit derived artifacts without validation
-- Measure currency against real dependencies (commits + snapshots)
-
-## Key Tools and Their Purpose
-
-**Schema Snapshots (schema/central.json, schema/tenant.json):**
-- Generated from real Everspot databases via `tools/generate-schema-snapshots.php`
-- Stamped with snapshot_commit (Everspot origin/main hash) for drift detection
-- Central: ~18 tables (users, tenants, roles, permissions, plans)
-- Tenant: ~152 tables (complete data model: transactions, customers, orders, properties, etc.)
-- Regenerate when migrations change using standalone extractor
-
-**Model Skeleton Generator (tools/extract-model-skeleton.php):**
-- Extracts mechanical parts from model source (frontmatter, properties, methods, relationships)
-- Reads via git show origin/main:<path>
-- Outputs partial markdown with AI sections marked <!-- AI: ... -->
-- Handles STI inheritance (separates "Defined in X" vs "Inherited from Y")
-- Usage: `php tools/extract-model-skeleton.php <model-path>`
-
-## STI (Single Table Inheritance) Pattern
-
-When multiple models share one table (discriminated by type column):
-
-**Base Model (e.g., Transaction):**
-- Frontmatter: `sti: base`, `sti_subtypes: [Payment, Refund]`
-- Renders FULL schema table from snapshot (owns the shared table documentation)
-- Lists subtypes with discriminator values
-
-**Subtype Model (e.g., Payment):**
-- Frontmatter: `sti: subtype`, `sti_base: Transaction`, `sti_discriminator: type=payment`
-- Links to base for schema ("See [Transaction](./transaction.md) for full schema")
-- Documents ONLY subtype-specific relationships/methods/scopes
-- NO duplicate schema table
-
-Both base and subtypes count as separate models for coverage.
+**Model skeleton generator** (`tools/extract-model-skeleton.php`) — extracts mechanical parts (frontmatter, properties, methods, relationships) by reading via `git show origin/main:<path>`. Outputs partial markdown with AI sections marked `<!-- AI: ... -->`; handles STI inheritance. Usage: `php tools/extract-model-skeleton.php <model-path>`. See `tools/README.md`.
