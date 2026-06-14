@@ -25,9 +25,9 @@ The Transaction module integrates with payment processors for live payment proce
 This module contains 6 concrete Eloquent models:
 
 ### Core Transaction Models
-- **Transaction** — Base transaction model using Single Table Inheritance *(doc pending Bootstrap)*
-- **Payment** — Customer payment transactions (extends Transaction) *(doc pending Bootstrap)*
-- **Refund** — Refund transactions (extends Transaction) *(doc pending Bootstrap)*
+- **[Transaction](./models/transaction.md)** — Base transaction model using Single Table Inheritance (STI base)
+- **[Payment](./models/payment.md)** — Customer payment transactions (extends Transaction, `type=payment`)
+- **[Refund](./models/refund.md)** — Refund transactions (extends Transaction, `type=refund`)
 
 ### Supporting Models
 - **[PaymentMethod](./models/payment-method.md)** — Stored payment methods (credit cards, bank accounts)
@@ -97,8 +97,8 @@ The module dispatches events for key transaction lifecycle moments:
 
 ## Coverage
 
-**Pending Bootstrap:**
-- Transaction, Payment, Refund, PaymentMethod, PaymentMethodRequest, DepositBatch — Listed in module inventory; full documentation generated during Bootstrap.
+**Complete (Bootstrap Phase 1):**
+All 6 models documented at `modules/transaction/models/`. Built against commit `86b4328c28e8f0f8b1f0a0a84210b51ba08816d0`.
 
 ## Related Modules
 - **Customer** — Customer entities making payments
