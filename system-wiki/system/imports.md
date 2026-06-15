@@ -68,7 +68,7 @@ It supplies six shared `protected` helpers that concrete imports compose. **This
 | `shouldDelete(array $row): bool` | True when the row sets `_delete` or `delete` truthy. The convention for soft-driving deletions from a spreadsheet. |
 | `deleteModel(string $modelClass, array $row, array $relationshipsToDelete = []): bool` | Finds `$row['id']`, optionally deletes named relationships first, then deletes the model. No-op (returns false) if `id` is missing or not found. |
 | `getUpdateArray(array $mapping, array $data): array` | Projects a row into a model attribute array using a `field => dataKey` map — only keys present in the row are included. The workhorse for column→field mapping. |
-| `saveExternalId(Model $model, ?string $externalId, ?string $system = 'default'): void` | Calls `$model->addOrDeleteExternalId(...)` — ties imports to the [[has-external-ids]] trait, so imported rows carry their source-system identity. |
+| `saveExternalId(Model $model, ?string $externalId, ?string $system = 'default'): void` | Calls `$model->addOrDeleteExternalId(...)` — ties imports to the [HasExternalIds](./traits/index.md#hasexternalids) trait, so imported rows carry their source-system identity. |
 | `saveAttributeValuesForModel(Model $model, array $row): void` | Reads the model's dynamic attributes via `GetAttributesValuesForModel` (Attribute module) and, for any row column matching an attribute key (case-/dash-normalized), persists it via `SaveAttributeValueForModel`. **This is why imports can populate EAV attributes by simply adding a column named after the attribute key.** |
 
 ---
@@ -100,11 +100,11 @@ class XImport extends BaseImport implements OnEachRow
 
 Conventions that hold across the standard imports:
 - **Upsert by `id`** — rows with an `id` update; rows without create. `id` is validated `nullable|exists:<table>,id`.
-- **`external_id`** — most imports map an `external_id` column to the [[has-external-ids]] trait for idempotent re-imports from a source system.
+- **`external_id`** — most imports map an `external_id` column to the [HasExternalIds](./traits/index.md#hasexternalids) trait for idempotent re-imports from a source system.
 - **Empty-string → null** — ID/foreign-key columns left blank are coerced to `null` before `updateOrCreate` (see `CustomerImport`).
 - **Related-record creation** — an import may reach beyond its primary model: `CustomerImport` also upserts an address + notes + veteran tag; `PropertyImport` optionally creates a `MapLocation`.
 
-The per-import column→field mapping and `rules()` are the genuinely import-specific detail. They live in the source and are **not** duplicated here (DRY). When a spreadsheet author needs the exact columns for one type, read that import's `rules()` — it is the authoritative column list. *(If per-import column references become a frequent fallback-log entry, that is the signal to add thin per-import stubs — see "Future Work".)*
+The per-import column→field mapping and validation rules are the genuinely import-specific detail. **Each concrete import has its own doc** — co-located in its module at `modules/<module>/imports/<name>.md` — that lists every valid spreadsheet column, whether it's required, its type/constraint, and the conditional rules `rules()` can't express. The registry table below links to each. (Those per-import docs are derived from `rules()` and `onRow()`; the source remains authoritative — re-derive on update.)
 
 ---
 
@@ -112,26 +112,26 @@ The per-import column→field mapping and `rules()` are the genuinely import-spe
 
 All entries reachable from the standard UI come from `Import::getImports()`. Target model is the primary entity each import upserts (related models it also touches are noted).
 
-| Type key | Label | Primary model | Module | Also touches |
+| Type key | Doc (columns + rules) | Primary model | Module | Also touches |
 |---|---|---|---|---|
-| `property` | Property | [[property]] | Property | MapLocation (optional) |
-| `property-commitment` | Property Commitment | [[property-commitment]] | Property | Property |
-| `property-group` | Property Group | [[property-group]] | Property | — |
-| `customer` | Customer | [[customer]] | Customer | Address, Note, VeteranTag |
-| `merge-customers` | Merge Customers | [[customer]] | Customer | *(merge, not upsert — see Variants)* |
-| `interment` | Interment | [[interment]] | Interment | — |
-| `owner-file-line` | Owner File Line | [[owner-file-line]] | Common | OwnerFile, Property |
-| `map-location` | Map Location | [[map-location]] | Mapping | Property |
-| `order` | Order | [[order]] | Order | — |
-| `order-line` | Order Line | [[order-line]] | Order | — |
-| `payment-plan` | Payment Plan | [[payment-plan]] | PaymentPlan | — |
-| `payment` | Payment | [[payment]] | Transaction | — |
-| `delivery` | Delivery | [[delivery]] | Delivery | — |
-| `delivery-line` | Delivery Line | [[delivery-line]] | Delivery | OrderLine, LiabilityLine |
-| `certificate-line` | Certificate Line | [[certificate-line]] | Certificate | — |
-| `media` | Media | [[media]] | Common | — |
+| `property` | [property](../modules/property/imports/property.md) | [Property](../modules/property/models/property.md) | Property | MapLocation (optional) |
+| `property-commitment` | [property-commitment](../modules/property/imports/property-commitment.md) | [PropertyCommitment](../modules/property/models/property-commitment.md) | Property | Property |
+| `property-group` | [property-group](../modules/property/imports/property-group.md) | [PropertyGroup](../modules/property/models/property-group.md) | Property | — |
+| `customer` | [customer](../modules/customer/imports/customer.md) | [Customer](../modules/customer/models/customer.md) | Customer | Address, Note, VeteranTag |
+| `merge-customers` | [merge-customers](../modules/customer/imports/merge-customers.md) | [Customer](../modules/customer/models/customer.md) | Customer | *(merge, not upsert — see Variants)* |
+| `interment` | [interment](../modules/interment/imports/interment.md) | [Interment](../modules/interment/models/interment.md) | Interment | Event, Note |
+| `owner-file-line` | [owner-file-line](../modules/common/imports/owner-file-line.md) | [OwnerFileLine](../modules/common/models/owner-file-line.md) | Common | OwnerFile, Property |
+| `map-location` | [map-location](../modules/mapping/imports/map-location.md) | [MapLocation](../modules/mapping/models/map-location.md) | Mapping | Property |
+| `order` | [order](../modules/order/imports/order.md) | [Order](../modules/order/models/order.md) | Order | OrderCustomer, Address |
+| `order-line` | [order-line](../modules/order/imports/order-line.md) | [OrderLine](../modules/order/models/order-line.md) | Order | — |
+| `payment-plan` | [payment-plan](../modules/payment-plan/imports/payment-plan.md) | [PaymentPlan](../modules/payment-plan/models/payment-plan.md) | PaymentPlan | — |
+| `payment` | [payment](../modules/transaction/imports/payment.md) | [Payment](../modules/transaction/models/payment.md) | Transaction | *(create-only; polymorphic parent)* |
+| `delivery` | [delivery](../modules/delivery/imports/delivery.md) | [Delivery](../modules/delivery/models/delivery.md) | Delivery | — |
+| `delivery-line` | [delivery-line](../modules/delivery/imports/delivery-line.md) | [DeliveryLine](../modules/delivery/models/delivery-line.md) | Delivery | OrderLine, LiabilityLine |
+| `certificate-line` | [certificate-line](../modules/certificate/imports/certificate-line.md) | [CertificateLine](../modules/certificate/models/certificate-line.md) | Certificate | — |
+| `media` | [media](../modules/common/imports/media.md) | [Media](../modules/common/models/media.md) | Common | Tags |
 
-> Re-derive this table from `Import::getImports()` on every update — the registry is the source of truth, and an import added to source but not yet to the registry will not appear in the UI.
+> Re-derive this table from `Import::getImports()` on every update — the registry is the source of truth, and an import added to source but not yet to the registry will not appear in the UI. Each per-import doc is co-located in its module's `imports/` folder.
 
 ---
 
@@ -139,11 +139,11 @@ All entries reachable from the standard UI come from `Import::getImports()`. Tar
 
 These exist in the codebase and are intentionally called out so the "everything extends BaseImport with OnEachRow" mental model isn't over-applied:
 
-| Class | How it differs |
+| Class / Doc | How it differs |
 |---|---|
-| `Modules\Common\Imports\BulkFileUploadFileImport` | Extends `BaseImport` but implements `ToArray` (whole-sheet array), not `OnEachRow`. Drives the zip/bulk-file upload path (`runZipUpload`), not the standard registry flow. |
-| `Modules\Customer\Imports\MergeCustomersImport` | Extends `BaseImport` + `OnEachRow`, but performs customer **merge** logic rather than upsert. Registered as `merge-customers`. |
-| `Modules\Mapping\Livewire\Imports\*` | A **separate, parallel** import system — `LocationMapperImport implements WithMultipleSheets` with `MarkerSheet` / `PropertySheet` (`WithHeadingRow`). Does **not** extend `BaseImport` and is **not** in the registry; it is driven by the Mapping module's own Livewire flow. If/when the wiki documents Mapping's import UI, this is a distinct subsystem to cover separately. |
+| [bulk-file-upload-file](../modules/common/imports/bulk-file-upload-file.md) (`BulkFileUploadFileImport`) | Extends `BaseImport` but implements `ToArray` (whole-sheet array), not `OnEachRow`. Drives the zip/bulk-file upload path (`runZipUpload`), not the standard registry flow. **Unregistered.** |
+| [merge-customers](../modules/customer/imports/merge-customers.md) (`MergeCustomersImport`) | Extends `BaseImport` + `OnEachRow`, but performs customer **merge** logic rather than upsert. Registered as `merge-customers` (so it's in the table above too). |
+| [location-mapper](../modules/mapping/imports/location-mapper.md) (`Mapping\Livewire\Imports\*`) | A **separate, parallel** system — `LocationMapperImport implements WithMultipleSheets` with `MarkerSheet` / `PropertySheet` (`WithHeadingRow`, currently stub placeholders). Does **not** extend `BaseImport`, **not** in the registry; driven by the Mapping module's own Livewire flow. |
 
 ---
 
@@ -160,6 +160,6 @@ _(Human insight goes here — e.g. operational gotchas, which imports are custom
 
 ## Future Work
 
-- **Per-import stubs** — if spreadsheet authors frequently need exact column lists, add thin `system/imports/<type>.md` docs (column→field mapping + `rules()`), linked from the registry table.
-- **Cross-link from model docs** — add an "Imported via" pointer in each target model doc (e.g. [[property]], [[customer]]) back to this doc. *(Deferred until the charter formally covers non-model docs.)*
+- **Per-import column docs** — ✅ Done. Every concrete import has a per-file doc under `modules/<module>/imports/` with its full column reference; linked from the registry table above.
+- **Cross-link from model docs** — add an "Imported via" pointer in each target model doc (e.g. [Property](../modules/property/models/property.md), [Customer](../modules/customer/models/customer.md)) back to its import doc. *(Pending — the model docs don't yet reference their imports.)*
 - **Codify the pattern** — ✅ Done. The subsystem-doc pattern is now `foundation.md` §5.6 + `meta/subsystem-template.md`; this doc is its reference example.

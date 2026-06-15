@@ -18,7 +18,7 @@ This is the **canonical registry of subsystem documents** (foundation.md §5.6).
 
 | Document | Mechanism | Status |
 |---|---|---|
-| **[imports.md](./imports.md)** | Spreadsheet (Excel/CSV) import: `BaseImport` contract, Livewire→Job→Excel flow, registry, all concrete imports | active (reference example) |
+| **[imports.md](./imports.md)** | Spreadsheet (Excel/CSV) import: `BaseImport` contract, Livewire→Job→Excel flow, registry. Per-import column docs live in each module's `imports/` folder (18 imports + 1 multi-sheet variant). | active (reference example) |
 
 _Candidates from `meta/non-model-surface.md` (not yet written): events/listeners graph, service families, jobs._
 
