@@ -30,6 +30,7 @@ Read the section a task needs rather than the whole document. `CLAUDE.md`'s "Whe
 | 5.3 | STI pattern | Base vs. subtype documentation |
 | 5.4 | Model template | Pointer to `meta/model-template.md` |
 | 5.5 | System & module docs | Lighter-depth non-model docs |
+| 5.6 | Subsystem documents | The reusable pattern for documenting non-model mechanisms |
 | 6.1 | Sync workflow | Step-by-step incremental update |
 | 6.2 | Lifecycle | Create / update / deprecate |
 | 6.3 | Human-authored content | Marked blocks, invalidation flagging |
@@ -233,6 +234,18 @@ Key invariant: `built_at` plus `source_paths` plus the connection snapshot defin
 
 Beyond models, the wiki makes a reasonable but shallow effort to document the system as a whole, primarily so model docs have canonical concepts to link to. Freshness for these is chosen per document: a doc that maps to a bounded set of files uses the same range check over those paths; a broad doc like `architecture.md`, where any path set is either noisy or lossy, uses a `review_after` date as its primary freshness mechanism, surfacing on a cadence rather than on every commit to a large directory.
 
+### 5.6 Subsystem documents
+
+A **subsystem document** is the reusable pattern for documenting a bounded, cross-model *mechanism* — a base class plus the concrete classes that extend it and the plumbing around them (the import subsystem, the event/listener graph, a service family). It exists so that the non-model surface (`meta/non-model-surface.md`) can be documented at the right altitude — one doc per mechanism — rather than one doc per file, which would multiply the corpus and the sync burden without adding proportional insight.
+
+This section deliberately states only the **rule**, not the instances. **Foundation never enumerates individual subsystem docs and must not grow as they are added.** The three things that *do* grow live elsewhere:
+
+- **The shape** every subsystem doc follows is the template at **`meta/subsystem-template.md`** — the single source for its frontmatter schema and section order (base contract → pattern → registry table → variants → human block). Do not copy that shape here; mirror §5.4's discipline.
+- **The canonical list** of which subsystems are documented lives in **`system/index.md`** ("Subsystem Documents"). Foundation points there; it does not maintain a parallel list.
+- **Per-subsystem freshness** uses the §3.4 mechanism already defined: a subsystem maps to a bounded source set (its base + registry + concrete classes), so it uses the `source_paths` range check; `review_after` is the fallback only where that set is genuinely unbounded.
+
+The result is a fixed cost: documenting a new subsystem adds a `system/<name>.md` file and one registry row in `system/index.md`, and **zero lines** to this document.
+
 ---
 
 ## 6. Maintenance Model
@@ -308,7 +321,7 @@ Search itself is not a command — it is the agent's native file search over the
 **Later, as the approach proves out:**
 
 - Finalize and harden the schema-extraction mechanics (the introspection vs. dump choice and the stancl tenant-context details) against real runs.
-- Extend documentation beyond models to services, actions, workflows, and API endpoints, on the same patterns.
+- Extend documentation beyond models to services, actions, workflows, and API endpoints. The **subsystem document** (§5.6) is the established pattern for this; `system/imports.md` is the reference example. Each new subsystem is a `system/*.md` file + a `system/index.md` row, not a foundation change.
 - Promote sync and snapshot generation from a manual maintainer task to CI against `origin/main`.
 - Reintroduce a generated manifest only if frontmatter-grep becomes slow, and only with a CI integrity check.
 - Revisit a dedicated search engine or semantic search only if a human-facing portal or a substantially larger corpus makes the native approach insufficient.

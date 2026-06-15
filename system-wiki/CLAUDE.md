@@ -58,6 +58,7 @@ Read the **specific** sections below — not all of foundation.md. Foundation is
 | **Sync** | `commands/sync.md` · foundation.md §6 (workflow, lifecycle, validation) |
 | **Snapshot schema** | `commands/snapshot-schema.md` · foundation.md §3.3 |
 | **Generate/Update a model doc** | `model-template.md` · `conventions.md` · foundation.md §5.2–5.4 |
+| **Document a subsystem** (non-model mechanism) | `subsystem-template.md` · `system/imports.md` (example) · foundation.md §5.6 |
 | **Audit** | `commands/audit.md` · foundation.md §7 |
 | **Review coverage** | `commands/review-coverage.md` · foundation.md §6.4 |
 | **A judgment call the rules don't cover** | foundation.md §2 (principles), §3 (architecture) |

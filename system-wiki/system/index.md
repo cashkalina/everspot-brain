@@ -12,6 +12,16 @@ This directory contains cross-cutting system documentation for Everspot — conc
 
 The system documentation provides context for the model documentation. It is maintained at lighter depth than the model docs, with the goal of giving each cross-cutting concept a canonical place to link to.
 
+## Subsystem Documents
+
+This is the **canonical registry of subsystem documents** (foundation.md §5.6). Each documents a bounded, cross-model mechanism following `meta/subsystem-template.md`. Foundation points here rather than listing them itself, so adding a subsystem doc costs one row here and **zero** lines in foundation.
+
+| Document | Mechanism | Status |
+|---|---|---|
+| **[imports.md](./imports.md)** | Spreadsheet (Excel/CSV) import: `BaseImport` contract, Livewire→Job→Excel flow, registry, all concrete imports | active (reference example) |
+
+_Candidates from `meta/non-model-surface.md` (not yet written): events/listeners graph, service families, jobs._
+
 ## Planned Documents
 
 The following system documents are planned for future phases:
