@@ -265,6 +265,12 @@ $active = PaymentPlan::activeAsOf('2026-01-01')->get();
 $open = PaymentPlan::open()->with('customers')->get();
 ```
 
+## Imports
+
+This model can be created/updated via spreadsheet import. See **[payment-plan](../imports/payment-plan.md)** for the column reference (valid headers, required fields, types, and conditional rules).
+
+The import mechanism (upload → queued job → Excel) is documented in the [import subsystem](../../../system/imports.md).
+
 <!-- human:begin -->
 ## Business Logic Notes
 

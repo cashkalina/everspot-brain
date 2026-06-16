@@ -289,6 +289,15 @@ $child->save();
 $kids = $parent->children;
 ```
 
+## Imports
+
+This model is touched by spreadsheet imports:
+
+- **[customer](../imports/customer.md)** — column reference (headers, required fields, types, rules).
+- **[merge-customers](../imports/merge-customers.md)** — column reference (headers, required fields, types, rules).
+
+The import mechanism (upload → queued job → Excel) is documented in the [import subsystem](../../../system/imports.md).
+
 <!-- human:begin -->
 ## Business Logic Notes
 

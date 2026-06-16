@@ -150,6 +150,12 @@ $available = $group->properties()->available()->get();
 $properties = $group->properties()->with('activeCommitment')->get();
 ```
 
+## Imports
+
+This model can be created/updated via spreadsheet import. See **[property-group](../imports/property-group.md)** for the column reference (valid headers, required fields, types, and conditional rules).
+
+The import mechanism (upload → queued job → Excel) is documented in the [import subsystem](../../../system/imports.md).
+
 <!-- human:begin -->
 ## Business Logic Notes
 

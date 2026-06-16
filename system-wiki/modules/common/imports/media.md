@@ -41,13 +41,13 @@ Spreadsheet header row uses these column names. **Required** reflects the litera
 | `disk` | No | string max 255 | — |
 | `conversions_disk` | No | string max 255 | — |
 | `size` | No | integer | — |
-| `manipulations` | No | JSON | Not in `rules()`; read in `onRow` — auto-decoded from JSON string if provided as a string |
-| `custom_properties` | No | JSON | Not in `rules()`; read in `onRow` — auto-decoded from JSON string if provided as a string |
+| `manipulations` | No | JSON | `nullable` in `rules()`; in `onRow` auto-decoded from a JSON string if provided as a string |
+| `custom_properties` | No | JSON | `nullable` in `rules()`; in `onRow` auto-decoded from a JSON string if provided as a string |
 | `is_public` | No | boolean | String values (`true`, `1`, `yes`, `y`) converted to boolean in `onRow` |
-| `generated_conversions` | No | JSON | Not in `rules()`; read in `onRow` — auto-decoded from JSON string if provided as a string |
-| `responsive_images` | No | JSON | Not in `rules()`; read in `onRow` — auto-decoded from JSON string if provided as a string |
+| `generated_conversions` | No | JSON | `nullable` in `rules()`; in `onRow` auto-decoded from a JSON string if provided as a string |
+| `responsive_images` | No | JSON | `nullable` in `rules()`; in `onRow` auto-decoded from a JSON string if provided as a string |
 | `order_column` | No | integer | — |
-| `tags` | No | string (comma-separated or array) | Not in `rules()`; read in `onRow` — parsed from comma-separated string and synced via `syncTags()` |
+| `tags` | No | string (comma-separated or array) | `nullable` in `rules()`; in `onRow` parsed from a comma-separated string and synced via `syncTags()` |
 
 ## Conditional Rules
 

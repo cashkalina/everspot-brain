@@ -121,6 +121,12 @@ $icon = $media->getFileTypeIconURL();  // '/assets/svg/brands/pdf-icon.svg'
 echo $media->formatted_collection_name;   // 'Customer Documents'
 ```
 
+## Imports
+
+This model can be created/updated via spreadsheet import. See **[media](../imports/media.md)** for the column reference (valid headers, required fields, types, and conditional rules).
+
+The import mechanism (upload → queued job → Excel) is documented in the [import subsystem](../../../system/imports.md).
+
 <!-- human:begin -->
 ## Business Logic Notes
 

@@ -161,5 +161,5 @@ _(Human insight goes here — e.g. operational gotchas, which imports are custom
 ## Future Work
 
 - **Per-import column docs** — ✅ Done. Every concrete import has a per-file doc under `modules/<module>/imports/` with its full column reference; linked from the registry table above.
-- **Cross-link from model docs** — add an "Imported via" pointer in each target model doc (e.g. [Property](../modules/property/models/property.md), [Customer](../modules/customer/models/customer.md)) back to its import doc. *(Pending — the model docs don't yet reference their imports.)*
+- **Cross-link from model docs** — ✅ Done. Each target model doc has an `## Imports` section linking to its per-import doc(s) and this subsystem.
 - **Codify the pattern** — ✅ Done. The subsystem-doc pattern is now `foundation.md` §5.6 + `meta/subsystem-template.md`; this doc is its reference example.

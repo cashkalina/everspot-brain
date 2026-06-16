@@ -113,6 +113,12 @@ echo $line->property_information;   // "Lot 12, Section A, Block 3"
 $commitment = $line->ownable;
 ```
 
+## Imports
+
+This model can be created/updated via spreadsheet import. See **[owner-file-line](../imports/owner-file-line.md)** for the column reference (valid headers, required fields, types, and conditional rules).
+
+The import mechanism (upload → queued job → Excel) is documented in the [import subsystem](../../../system/imports.md).
+
 <!-- human:begin -->
 ## Business Logic Notes
 

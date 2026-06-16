@@ -242,6 +242,12 @@ $shipping = $order->shipping_address;
 $order->delete();
 ```
 
+## Imports
+
+This model can be created/updated via spreadsheet import. See **[order](../imports/order.md)** for the column reference (valid headers, required fields, types, and conditional rules).
+
+The import mechanism (upload → queued job → Excel) is documented in the [import subsystem](../../../system/imports.md).
+
 <!-- human:begin -->
 ## Business Logic Notes
 
