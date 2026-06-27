@@ -169,11 +169,12 @@ semantic_facts:
   interment:
     # deceased_ref is REQUIRED + non-null (a decedent is a customer, never null).
     deceased_ref: { required_on_insert: true, nullable: false }
-    # interments.date is now NULLABLE in the DB (C3 — never fabricate a date). The
-    # CANONICAL record does not carry a `date` field — orion_load composes it at load
-    # time from doi/dod ONLY, else sends null (no sentinel, no birthday fallback). So on
+    # interments.date is a required (NOT NULL) operational column. The CANONICAL record
+    # does not carry a `date` field — orion_load composes it at load time from doi/dod,
+    # else defaults to Jan 1 of the current year (never the birthday, never a 1900
+    # sentinel; the semantic date of interment lives in `doi`, null when unknown). So on
     # the logical canonical record `date` is resolved_on_load and NOT required.
-    date: { required_on_insert: false, nullable: true, resolved_on_load: true }
+    date: { required_on_insert: false, nullable: false, resolved_on_load: true }
     # cemetery_id is NOT NULL in the DB but is injected at LOAD time (the cemetery is
     # a Wave-0b prerequisite), so cemetery_ref is NOT required on the canonical record.
     cemetery_ref: { required_on_insert: false, nullable: true, resolved_on_load: true }

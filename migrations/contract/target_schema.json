@@ -355,7 +355,7 @@
                 },
                 "date": {
                     "type": "string",
-                    "nullable": true,
+                    "nullable": false,
                     "required_on_insert": false,
                     "default": null,
                     "resolved_on_load": true

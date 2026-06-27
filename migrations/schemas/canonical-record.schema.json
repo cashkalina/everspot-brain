@@ -304,10 +304,7 @@
                     "$ref": "#/$defs/confidence"
                 },
                 "date": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"

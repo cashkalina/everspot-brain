@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -109,24 +110,36 @@ def _expand_partial(prefix: str, partial: Optional[dict]) -> dict[str, Any]:
     }
 
 
-def _interment_date(rec: dict) -> Optional[str]:
-    """Compose interment.date (now NULLABLE) from the best available canonical date.
+def _has_source_interment_date(rec: dict) -> bool:
+    """True if the source carries a usable interment/death date (doi or dod with a year)."""
+    for key in ("doi", "dod"):
+        p = rec.get(key)
+        if p and p.get("year"):
+            return True
+    return False
 
-    Returns ``YYYY-MM-DD`` or ``None``. Month/day default to 01 when unknown. C3: a date
-    is NEVER fabricated — when the source carries no interment/death date, ``None`` is
-    returned and the column is left null (``interments.date`` is now nullable in Everspot).
 
-    Only ``doi`` (date of interment) and ``dod`` (date of death) are real proxies for the
-    burial date. ``dob`` (date of BIRTH) is NOT — falling back to it would stamp the
-    decedent's birthday as the burial date (SPEC §7.2). So a record with only a dob gets
-    ``None``, never the birthday.
+def _interment_date(rec: dict) -> str:
+    """Compose the required ``interments.date`` column (NOT NULL) for a canonical record.
+
+    Returns ``YYYY-MM-DD`` — NEVER null. ``interments.date`` is a required operational
+    column, NOT a claim about the burial date (the semantic date of interment lives in
+    ``doi``, which stays null when unknown). Resolution:
+
+    * use ``doi`` (date of interment), else ``dod`` (date of death) when present
+      (month/day default to 01 when unknown); else
+    * default to **Jan 1 of the current year**.
+
+    ``dob`` (date of BIRTH) is deliberately NOT a fallback — using it would stamp the
+    decedent's birthday as the burial date (the old M3 bug). The old ``1900-01-01``
+    sentinel is gone; an undated interment gets the current-year Jan-1 default instead.
     """
     for key in ("doi", "dod"):
         p = rec.get(key)
         if p and p.get("year"):
             y, m, d = p["year"], p.get("month") or 1, p.get("day") or 1
             return f"{int(y):04d}-{int(m):02d}-{int(d):02d}"
-    return None
+    return f"{datetime.now(timezone.utc).year:04d}-01-01"
 
 
 # --------------------------------------------------------------------------- #
@@ -358,13 +371,14 @@ class OrionLoader:
         # <prefix>_year/_month/_day columns. A breach is a LOUD failure here.
         if entity in contract.contract_entities():
             contract.validate_or_raise(entity, rec)
-        # C3: no date is no longer fabricated — when the source carries no interment/death
-        # date, interment.date is sent as null (the column is nullable). Record a benign
-        # note (not an error/warning): this is honest absence, not a data-quality problem.
-        if entity == "interment" and _interment_date(rec) is None:
+        # interments.date is a required (NOT NULL) operational column. When the source
+        # carries no interment/death date, it defaults to Jan 1 of the current year (the
+        # semantic date lives in `doi`, which stays null when unknown). Record a benign
+        # note (not an error/warning) so the defaulting is visible in the load report.
+        if entity == "interment" and not _has_source_interment_date(rec):
             self.result.errors.append({
                 "entity": "interment", "external_id": rec["external_id"],
-                "note": "no source interment/death date; interment.date left null",
+                "note": f"no source interment/death date; interment.date defaulted to {_interment_date(rec)}",
             })
         payload = project_payload(
             entity, rec,
