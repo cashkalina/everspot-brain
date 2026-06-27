@@ -1,0 +1,188 @@
+# Target Contract Overlay (SPEC §6.2)
+#
+# The small TRACKED overlay that supplies the three things the live DB schema
+# cannot express, plus the raw-column -> LOGICAL-field projection the canonical
+# artifact (§7.1) actually uses. The generator (php artisan migration:generate-contract)
+# reads this together with live tenant introspection (columns/types/nullability/
+# defaults/FKs + each model's casts()) to emit contract/target_schema.json.
+#
+# THIS FILE IS GENERAL EVERSPOT TARGET FACTS — not client data. List-option type
+# keys and the area code are tenant-independent Everspot semantics. Client-specific
+# column names live in each project's mapping.yaml, never here.
+#
+# Verified against sandbox tenant bellschapel-sb.manama-v1.test on 2026-06-27.
+
+version: 1
+
+# --------------------------------------------------------------------------- #
+# Which target tables back each canonical entity, and the Orion resource route.
+# Cemetery + list_option are Wave-0 reference prerequisites (not emitted as part
+# of the canonical client artifact) but are part of the contract so the
+# orchestrator can answer "what does X map to" for them too.
+# --------------------------------------------------------------------------- #
+entities:
+  cemetery:
+    table: cemeteries
+    route: /api/v1/cemeteries
+    reference_data: true        # Wave-0b prerequisite, not a canonical client file
+  property_group:
+    table: property_groups
+    route: /api/v1/property-groups
+  property:
+    table: properties
+    route: /api/v1/properties
+  customer:
+    table: customers
+    route: /api/v1/customers
+  interment:
+    table: interments
+    route: /api/v1/interments
+  list_option:
+    table: list_options
+    route: /api/v1/list-options
+    reference_data: true
+
+# --------------------------------------------------------------------------- #
+# 1. list_option type bindings  (SPEC §6.2, §7.2)
+#    Raw FK column (-> list_options.id) => the list_option_types.key it draws from.
+#    A value in one of these fields must resolve to a real tenant list_option id
+#    of this type, or become a question — never invented. The generator stamps
+#    `list_option_type` onto each of these logical fields.
+#    Verified: list_option_types.key column in the sandbox holds exactly these slugs.
+# --------------------------------------------------------------------------- #
+list_option_bindings:
+  interment.interment_type_id: interment_type
+  interment.service_type_id: service_type
+  interment.sex_id: sex
+  interment.nok_relation_id: customer_relation
+  interment.suffix_id: name_suffix
+  customer.suffix_id: name_suffix
+  # customer.type_id / customer.title_id also FK list_options (customer_type /
+  # name_title) but are not carried by the non-financial-core canonical record.
+
+# --------------------------------------------------------------------------- #
+# 2. partial-date groupings  (SPEC §6.2, §7.2)
+#    Collapse the four `<prefix>_year/_month/_day/_estimated` DB columns the
+#    PartialDateCast manages into ONE logical partial-date object field. The
+#    generator detects these from casts() (PartialDateCast::class.':<prefix>')
+#    AND honors this overlay as the authoritative grouping. required_on_insert
+#    follows the column family (the family is nullable here, so the logical field
+#    is nullable). `estimated` defaults false.
+# --------------------------------------------------------------------------- #
+partial_date_groups:
+  customer:
+    dob: dob          # logical_field: column_prefix
+  interment:
+    dob: dob
+    dod: dod
+    doi: doi
+
+# --------------------------------------------------------------------------- #
+# 3. attribute (custom-field) area codes  (SPEC §6.2, §7.2)
+#    HasAttributes models whose extra logical fields land in Everspot's Attribute
+#    engine under a known area code. Verified: AttributeArea code 'location-property'
+#    exists (Property::scope forAreaCode('location-property'), Mapping module).
+#    `logical_fields` are first-class on the canonical record (the proven artifact
+#    carries section/lot/space as scalars) but are persisted via the attribute
+#    engine on load — they are NOT real `properties` columns, so the overlay both
+#    DECLARES them (the schema can't) and records where they go.
+# --------------------------------------------------------------------------- #
+attribute_areas:
+  property:
+    area_code: location-property
+    logical_fields:
+      section: { type: string }
+      lot: { type: string }
+      space: { type: string }
+
+# --------------------------------------------------------------------------- #
+# 4. FK -> ref mapping  (SPEC §6.2)
+#    Entity-FK columns (-> a target ENTITY table, not list_options) are projected
+#    to the parent's external_id `*_ref` string in the canonical artifact. Map the
+#    raw column to the logical ref-field name + the entity it points at. The
+#    generator carries the column's NOT-NULL-without-default => required_on_insert
+#    onto the ref field. Columns not listed (created_by/updated_by/deleted_by/
+#    audit + out-of-scope FKs) are dropped from the logical contract.
+# --------------------------------------------------------------------------- #
+fk_ref_mappings:
+  property_group:
+    cemetery_id:        { ref_field: cemetery_ref, target: cemetery }
+  property:
+    property_group_id:  { ref_field: property_group_ref, target: property_group }
+    cemetery_id:        { ref_field: cemetery_ref, target: cemetery }
+  interment:
+    deceased_id:        { ref_field: deceased_ref, target: customer }
+    interment_space_id: { ref_field: property_ref, target: property }
+    cemetery_id:        { ref_field: cemetery_ref, target: cemetery }
+    nok_id:             { ref_field: next_of_kin_ref, target: customer }
+  customer:
+    parent_id:          { ref_field: parent_ref, target: customer }
+
+# --------------------------------------------------------------------------- #
+# 5. Logical-field renames / synthetic logical fields the canonical artifact uses
+#    that are neither a 1:1 column nor covered above. (SPEC §7.1/§7.2 semantics.)
+# --------------------------------------------------------------------------- #
+extra_logical_fields:
+  # cemetery_ref is an operational link the canonical customer carries even
+  # though `customers` has no cemetery_id column.
+  customer:
+    cemetery_ref: { type: ref, target: cemetery, nullable: true }
+    attributes:   { type: object, nullable: true }
+  property:
+    attributes:   { type: object, nullable: true }
+  interment:
+    next_of_kin_relation: { type: string, nullable: true }
+    attributes:   { type: object, nullable: true }
+
+# Every canonical record carries provenance + confidence envelope fields.
+envelope_fields:
+  external_id: { type: external_id, nullable: false, required_on_insert: true }
+  _provenance: { type: object, nullable: false, required_on_insert: false }
+  _confidence: { type: number, nullable: false, required_on_insert: false }
+
+# --------------------------------------------------------------------------- #
+# 6. Per-entity logical-field whitelist (SPEC §6.6 scope = non-financial core).
+#    Only these raw columns become first-class logical scalar fields; everything
+#    else on the table is out of contract scope for v1 (financial/audit/event
+#    columns are v1.1). Partial-date / FK-ref / list_option / attribute fields
+#    above are folded in automatically. A canonical record may ONLY contain
+#    fields drawn from this whitelist + the folded-in logical fields + envelope.
+# --------------------------------------------------------------------------- #
+scalar_fields:
+  cemetery: [name, legal_name, short_name, address_line_one, address_line_two,
+             city, zip_code, contact_phone, contact_email, website,
+             attribute_data, config_data]
+  property_group: [name]
+  property: []                # location -> attributes; type/status resolved on load
+  customer: [status, first_name, middle_name, last_name, suffix_id,
+             company_name, contact_email, contact_phone, is_active]
+  interment: [date, status, first_name, middle_name, last_name, suffix_id,
+              interment_type_id, service_type_id, sex_id, nok_relation_id, age]
+  list_option: [type, key, name]
+
+# --------------------------------------------------------------------------- #
+# 7. Hard semantic facts the schema/casts cannot express (SPEC §7.2). The
+#    generator stamps these as required_on_insert/nullable overrides AFTER the
+#    column-derived defaults, so a contract violation is loud.
+# --------------------------------------------------------------------------- #
+semantic_facts:
+  interment:
+    # deceased_ref is REQUIRED + non-null (a decedent is a customer, never null).
+    deceased_ref: { required_on_insert: true, nullable: false }
+    # interments.date is now NULLABLE in the DB (C3 — never fabricate a date). The
+    # CANONICAL record does not carry a `date` field — orion_load composes it at load
+    # time from doi/dod ONLY, else sends null (no sentinel, no birthday fallback). So on
+    # the logical canonical record `date` is resolved_on_load and NOT required.
+    date: { required_on_insert: false, nullable: true, resolved_on_load: true }
+    # cemetery_id is NOT NULL in the DB but is injected at LOAD time (the cemetery is
+    # a Wave-0b prerequisite), so cemetery_ref is NOT required on the canonical record.
+    cemetery_ref: { required_on_insert: false, nullable: true, resolved_on_load: true }
+  cemetery:
+    attribute_data: { required_on_insert: true, nullable: false, json_object: true }
+    config_data: { required_on_insert: false, nullable: true, json_object: true }
+  property:
+    property_group_ref: { required_on_insert: true, nullable: false }
+    cemetery_ref: { required_on_insert: true, nullable: false }
+    # property_type_id is NOT NULL in the DB but is resolved/injected at LOAD time
+    # (Wave-0b reference data), so it is NOT required on the canonical record.
+    property_type_id: { type: integer, required_on_insert: false, nullable: true, resolved_on_load: true }

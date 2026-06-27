@@ -1,0 +1,32 @@
+# Everspot AI data-migration pipeline — Python deps (target: Python 3.11+).
+# See README.md for which deps each script layer uses.
+
+# --- tables / IO (engine) ---
+pandas>=2.2
+pyarrow>=16.0          # parquet for tables + source_index
+pyyaml>=6.0            # project.yaml + ledger (mapping.yaml, value_sets.yaml)
+
+# --- profiling (stage 1) ---
+ydata-profiling>=4.8
+
+# --- cleansing primitives (stage 3) ---
+nameparser>=1.1        # parse_name.py
+python-dateutil>=2.9   # normalize_date.py
+phonenumbers>=8.13     # normalize_phone.py
+usaddress>=0.5.10      # standardize_address.py (planned; see plan §7)
+rapidfuzz>=3.9         # resolve_list_option.py, dedup
+splink>=4.0            # entity resolution (stage 5)
+
+# --- cleanse LLM fallback (stage 4) ---
+anthropic>=0.40        # llm_fallback.py (structured-output residual resolution)
+
+# --- emit (stage 8) ---
+openpyxl>=3.1          # emit_excel.py
+
+# --- integration (Wave-0 read + reference create) ---
+requests>=2.32         # orion_client.py
+
+# --- validation (stage 7) ---
+frictionless>=5.17     # target contract
+pandera>=0.20          # in-transform validation
+great-expectations>=0.18  # Data Docs (client-skimmable pass/fail)

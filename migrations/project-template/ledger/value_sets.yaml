@@ -1,0 +1,33 @@
+# EXAMPLE — ledger/value_sets.yaml. Durable coded-value translations.
+# Validates against schemas/value_sets.schema.json. Grows over time; never re-asked
+# once decided. The STAT translation here was answered via question q_0007.
+schema_version: 1
+
+value_sets:
+  - table: MASTER_OWNERS
+    column: STAT
+    target_field: status
+    description: "Owner account status code → Everspot customer.status (lead|customer)."
+    values:
+      - source_value: "A"            # Active
+        target_value: customer
+        provenance:
+          decided_by: ck@everspot.io
+          decided_at: "2026-06-25T16:40:00Z"
+          source_question: q_0007
+          confidence: 1.0
+      - source_value: "R"            # Reservation-only / prospect
+        target_value: lead
+        provenance:
+          decided_by: ck@everspot.io
+          decided_at: "2026-06-25T16:40:00Z"
+          source_question: q_0007
+          confidence: 1.0
+      - source_value: "C"            # Cancelled — no active relationship; treated as lead
+        target_value: lead
+        raises_question: false
+        provenance:
+          decided_by: ck@everspot.io
+          decided_at: "2026-06-25T16:40:00Z"
+          source_question: q_0007
+          confidence: 1.0

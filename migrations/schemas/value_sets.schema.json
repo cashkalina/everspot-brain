@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/value_sets.schema.json",
+  "title": "Value-Set Translations",
+  "description": "Shape of ledger/value_sets.yaml — durable coded-value translations keyed by (table, column, source value) → target value, each with provenance. Grows over time; never re-asked once decided. See 01-operating-model.md §1 and plan §4.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["value_sets"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1, "default": 1 },
+    "value_sets": {
+      "type": "array",
+      "description": "One entry per (table, column) value-set.",
+      "items": { "$ref": "#/$defs/valueSet" }
+    }
+  },
+  "$defs": {
+    "valueSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["table", "column", "target_field", "values"],
+      "properties": {
+        "table": { "type": "string", "description": "Source table name." },
+        "column": { "type": "string", "description": "Source column holding coded values." },
+        "target_field": {
+          "type": "string",
+          "description": "Everspot field these codes resolve into (e.g. status, type)."
+        },
+        "description": { "type": "string" },
+        "values": {
+          "type": "array",
+          "description": "Per-source-value translation rows.",
+          "items": { "$ref": "#/$defs/valueTranslation" }
+        }
+      }
+    },
+    "valueTranslation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_value", "target_value", "provenance"],
+      "properties": {
+        "source_value": {
+          "type": "string",
+          "description": "Raw coded value as it appears in the source (e.g. \"A\")."
+        },
+        "target_value": {
+          "description": "Resolved Everspot value — a status/type string, a tenant list_option ID, or null when the source value means \"no value\".",
+          "type": ["string", "integer", "null"]
+        },
+        "raises_question": {
+          "type": "boolean",
+          "description": "True if this value was unresolved and surfaced as a question rather than confidently defaulted.",
+          "default": false
+        },
+        "provenance": {
+          "type": "object",
+          "description": "Who/what decided this translation and when — the audit trail.",
+          "additionalProperties": false,
+          "required": ["decided_by", "decided_at"],
+          "properties": {
+            "decided_by": {
+              "type": "string",
+              "description": "Operator email, \"ai-proposed\", or \"auto-resolved\"."
+            },
+            "decided_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "When the decision was recorded."
+            },
+            "source_question": {
+              "type": "string",
+              "description": "Question id (e.g. q_0007) this translation was answered from, if any.",
+              "pattern": "^q_[0-9]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Confidence at decision time (1.0 once operator-confirmed)."
+            }
+          }
+        }
+      }
+    }
+  }
+}

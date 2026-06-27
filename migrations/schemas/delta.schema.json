@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/delta.schema.json",
+  "title": "Snapshot Delta",
+  "description": "Shape of snapshots/<v>/delta.json — the per-snapshot classification of every source record vs. the prior snapshot, joined on source_id and compared on row_hash. Drives delta-scoped re-runs. See 01-operating-model.md §5.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["snapshot", "previous_snapshot", "tables"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1, "default": 1 },
+    "snapshot": {
+      "type": "string",
+      "description": "Snapshot being classified (e.g. v2).",
+      "pattern": "^v[0-9]+$"
+    },
+    "previous_snapshot": {
+      "type": ["string", "null"],
+      "description": "Prior snapshot compared against (e.g. v1). Null for the first snapshot (everything is NEW).",
+      "pattern": "^v[0-9]+$"
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "tables": {
+      "type": "array",
+      "description": "One delta block per source table.",
+      "items": { "$ref": "#/$defs/tableDelta" }
+    }
+  },
+  "$defs": {
+    "tableDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["table", "new", "changed", "unchanged", "removed"],
+      "properties": {
+        "table": { "type": "string" },
+        "new": {
+          "type": "array",
+          "description": "source_ids present only in this snapshot — full pipeline, mint new external_id.",
+          "items": { "type": "string" }
+        },
+        "changed": {
+          "type": "array",
+          "description": "source_ids in both but row_hash differs — re-cleanse/assemble only these; external_id reused (load = update).",
+          "items": { "type": "string" }
+        },
+        "unchanged": {
+          "type": "array",
+          "description": "source_ids in both with equal row_hash — zero work; reuse cached canonical + external_id.",
+          "items": { "type": "string" }
+        },
+        "removed": {
+          "type": "array",
+          "description": "source_ids only in the prior snapshot — never auto-deleted; surfaced for operator judgment.",
+          "items": { "type": "string" }
+        },
+        "counts": {
+          "type": "object",
+          "description": "Convenience tallies (must equal the array lengths).",
+          "additionalProperties": false,
+          "properties": {
+            "new": { "type": "integer", "minimum": 0 },
+            "changed": { "type": "integer", "minimum": 0 },
+            "unchanged": { "type": "integer", "minimum": 0 },
+            "removed": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "new_value_set_values": {
+          "type": "array",
+          "description": "Coded values seen for the first time in this snapshot, needing a value-set decision (Gate-1 question).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["column", "value"],
+            "properties": {
+              "column": { "type": "string" },
+              "value": { "type": "string" },
+              "first_seen_in": {
+                "type": "array",
+                "description": "Sample source_ids exhibiting the new value.",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "new_columns": {
+          "type": "array",
+          "description": "Columns present in this snapshot but absent from the prior one — need mapping (Gate-1 question).",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/question.schema.json",
+  "title": "Question Record",
+  "description": "JSON-first canonical question record (SPEC §9.4). The single batched discovery round emits an array of these; they render to questions.md for the operator and export straight into the customer-management app. Each resolved one is persisted to ledger/questions/<id>.json. The `id` is a STABLE function of the question's SUBJECT (column/value/entity), never run position, so re-runs and v2 dedupe (SPEC §9.5 idempotency).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "gate", "kind", "question", "proposed_answer", "status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable, subject-derived question id. `q_<kind>__<subject-slug>` so the same subject always produces the same id across runs and snapshots (idempotency, SPEC §9.5).",
+      "pattern": "^q_[a-z_]+__[a-z0-9_.:-]+$"
+    },
+    "gate": {
+      "type": "string",
+      "description": "Coarse origin of the question within the single discovery round: a mapping ambiguity vs a projected exception. Retained for review grouping (the two old gates collapse into one round, SPEC §9).",
+      "enum": ["mapping", "exception"]
+    },
+    "kind": {
+      "type": "string",
+      "description": "Question type (SPEC §9.4) — drives how it renders and how the answer is applied. value_set=a coded value did not resolve to a real tenant list_option id, or the value-set meaning is ambiguous; unmapped=a source column feeds a required field but isn't mapped; missing_required=a required target field has no source column; source_key=a table has no stable identifying key; entity_merge=a borderline merge pair; validation=a blocking validation failure data cannot fill.",
+      "enum": ["value_set", "unmapped", "missing_required", "source_key", "entity_merge", "validation"]
+    },
+    "entity": {
+      "type": "string",
+      "description": "Target Everspot entity the question concerns, if applicable."
+    },
+    "field": {
+      "type": "string",
+      "description": "Target field the question concerns, if applicable."
+    },
+    "table": {
+      "type": "string",
+      "description": "Source table the question concerns, if applicable."
+    },
+    "column": {
+      "type": "string",
+      "description": "Source column the question concerns, if applicable."
+    },
+    "question": {
+      "type": "string",
+      "description": "The human-readable prompt rendered into questions.md."
+    },
+    "row_refs": {
+      "type": "array",
+      "description": "Pointers to the source location(s) the question is about, e.g. \"register!ITYPE\" or \"BURIALS:48213\".",
+      "items": { "type": "string" }
+    },
+    "options": {
+      "type": "array",
+      "description": "Allowed answer choices (for value_set, the candidate target tokens/ids; for mapping/source_key, the candidate columns/targets).",
+      "items": {}
+    },
+    "allow_custom": {
+      "type": "boolean",
+      "description": "Whether the operator may supply a value outside `options`.",
+      "default": true
+    },
+    "proposed_answer": {
+      "description": "The AI's suggested answer — MANDATORY so a busy operator can 'accept all'. For value_set, an object source_value->target (or null parts the operator must fill); for source_key, the proposed key columns; for unmapped/missing_required, the proposed source column or null; for validation, the proposed remediation.",
+      "type": ["object", "array", "string", "integer", "boolean", "null"]
+    },
+    "confidence": {
+      "type": "number",
+      "description": "AI confidence in the proposed answer.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "handoff": {
+      "type": "string",
+      "description": "Who should answer: internal (migration team), client (hand to the customer), either.",
+      "enum": ["internal", "client", "either"],
+      "default": "internal"
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle: open (awaiting answer — orchestrator MUST NOT proceed), answered (operator answered), auto-resolved (a confident default was recorded with logging, never silent), skipped (deferred with rationale).",
+      "enum": ["open", "answered", "auto-resolved", "skipped"]
+    },
+    "answer": {
+      "description": "The recorded answer (same shape options as proposed_answer). Present when status is answered or auto-resolved.",
+      "type": ["object", "array", "string", "integer", "boolean", "null"]
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this resolution was reached (the default's basis, or the skip reason)."
+    },
+    "answered_by": {
+      "type": "string",
+      "description": "Operator email, \"accept-all\", or \"auto-resolved\"."
+    },
+    "answered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "first_seen_snapshot": {
+      "type": "string",
+      "description": "Snapshot id where this question first arose (e.g. v1).",
+      "pattern": "^v[0-9]+$"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "enum": ["answered", "auto-resolved"] } } },
+      "then": { "required": ["answer"] }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/source-index.schema.json",
+  "title": "Source Index (parquet column contract)",
+  "description": "Documents the columns of snapshots/<v>/source_index.parquet — the only artifact the delta engine reads to compare drops. The parquet is row-per-source-record. This JSON Schema describes ONE such row (the per-row logical shape); the file is a table of these. See 01-operating-model.md §2.",
+  "type": "object",
+  "x-parquet": {
+    "format": "parquet",
+    "row_grain": "one row per source record",
+    "partitioned_by": ["table"],
+    "note": "raw cell values are stored as additional columns alongside the fixed columns below; they are namespaced under raw.* to avoid collision with the fixed columns."
+  },
+  "additionalProperties": false,
+  "required": ["table", "source_id", "row_hash", "raw"],
+  "properties": {
+    "table": {
+      "type": "string",
+      "description": "Normalized source table name this row came from."
+    },
+    "source_id": {
+      "type": "string",
+      "description": "\"<table>:<source_key>\" — the sacred stable identity. external_id is derived from this. See §2.",
+      "pattern": "^[^:]+:.+$"
+    },
+    "row_hash": {
+      "type": "string",
+      "description": "Stable hash of the row's normalized raw cell values; detects whether the record changed between drops. Hex digest.",
+      "pattern": "^[0-9a-f]+$"
+    },
+    "source_row": {
+      "type": "integer",
+      "description": "1-based original row number in the source table (provenance).",
+      "minimum": 1
+    },
+    "key_is_hashed": {
+      "type": "boolean",
+      "description": "True when source_key was derived by hashing identifying columns (no stable client key) — flags fragility.",
+      "default": false
+    },
+    "raw": {
+      "type": "object",
+      "description": "The record's raw cell values, column-name → value, exactly as normalized at ingest (strings preserved; nulls allowed). Stored physically as raw.<column> parquet columns.",
+      "additionalProperties": {
+        "type": ["string", "number", "boolean", "null"]
+      }
+    }
+  }
+}

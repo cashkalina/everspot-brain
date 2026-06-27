@@ -1,0 +1,14 @@
+# SYNTHETIC golden-fixture value sets. ITYPE code → interment_type token (then
+# resolved to a tenant list_option id via mapping.reference_resolution).
+schema_version: 1
+
+value_sets:
+  - table: register
+    column: itype
+    target_field: interment_type_id
+    description: "Interment type code → interment_type token."
+    values:
+      - source_value: "BUR"
+        target_value: burial
+      - source_value: "CRE"
+        target_value: cremation

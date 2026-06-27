@@ -1,0 +1,19 @@
+{
+  "id": "q_0007",
+  "gate": "mapping",
+  "entity": "customer",
+  "field": "status",
+  "question": "Source column MASTER_OWNERS.STAT has values A, R, C. How should each map to Everspot customer.status (lead | customer)?",
+  "kind": "value_set",
+  "row_refs": ["MASTER_OWNERS!STAT"],
+  "options": ["lead", "customer"],
+  "allow_custom": false,
+  "proposed_answer": { "A": "customer", "R": "lead", "C": "lead" },
+  "confidence": 0.62,
+  "handoff": "internal",
+  "status": "answered",
+  "answer": { "A": "customer", "R": "lead", "C": "lead" },
+  "answered_by": "ck@everspot.io",
+  "answered_at": "2026-06-25T16:40:00Z",
+  "first_seen_snapshot": "v1"
+}

@@ -1,0 +1,96 @@
+# EXAMPLE — ledger/mapping.yaml. The durable column→target mapping memory.
+# Validates against schemas/mapping.schema.json. Keyed by table+column, so it
+# re-applies automatically on every later drop. See plan §4.1.
+schema_version: 1
+
+tables:
+  - source_table: MASTER_OWNERS
+    target_entity: customer
+    columns:
+      - source: INTERNAL_GUID
+        action: external_id          # this column IS the source key → external_id
+        confidence: 1.0
+
+      - source: OWNER_NAME
+        action: split_name           # "SMITH, John A Jr" → parts
+        targets: [first_name, middle_name, last_name, suffix_id]
+        transform: parse_name
+        transform_version: parse_name@1.2.0
+        confidence: 0.9
+        note: Reversed "Last, First" form; suffix_id resolved via reference_resolution below.
+
+      - source: PHONE1
+        action: map
+        target: contact_phone
+        transform: normalize_phone   # → digits-only
+        transform_version: normalize_phone@1.0.1
+        confidence: 0.99
+
+      - source: EMAIL
+        action: map
+        target: email
+        confidence: 0.97
+
+      - source: STAT
+        action: value_map            # coded status → customer.status; table in value_sets.yaml
+        target: status
+        value_set_ref: MASTER_OWNERS.STAT
+        confidence: 0.62
+
+      - source: LAST_CONTACT_NOTE
+        action: unmapped             # free-text note with no Everspot home in V1 core
+        confidence: 1.0
+
+    reference_resolution:
+      - field: suffix_id
+        via: list_options
+        type: name_suffix
+        resolved: { "Jr": 4412, "Sr": 4413, "II": 4414 }
+        missing: ["Esq"]             # → Wave-0b create or Gate-1 question
+
+  - source_table: PLOTS
+    target_entity: property
+    columns:
+      - source: PLOT_NO
+        action: external_id
+        confidence: 1.0
+      - source: SECTION
+        action: map
+        target: section
+        confidence: 0.95
+      - source: LOT
+        action: map
+        target: lot
+        confidence: 0.95
+      - source: SPACE
+        action: map
+        target: space
+        confidence: 0.95
+      - source: PRICE
+        action: map
+        target: amount_cents         # currency → integer cents at assemble
+        transform: to_cents
+        transform_version: to_cents@1.0.0
+        confidence: 0.98
+
+  - source_table: BURIALS
+    target_entity: interment
+    secondary_entities: [customer]   # one burial row also yields the decedent Customer
+    columns:
+      - source: DECEDENT_NAME
+        action: split_name
+        targets: [first_name, middle_name, last_name, suffix_id]
+        transform: parse_name
+        transform_version: parse_name@1.2.0
+        confidence: 0.88
+      - source: DOD
+        action: map
+        target: interment_date
+        transform: normalize_date    # → partial-date object
+        transform_version: normalize_date@1.1.0
+        confidence: 0.9
+      - source: PLOT_NO
+        action: derive               # FK link → property.external_id via PLOTS
+        targets: [property_ref]
+        derivation: "Resolve to property where PLOTS.PLOT_NO == BURIALS.PLOT_NO; emit its external_id."
+        confidence: 0.93

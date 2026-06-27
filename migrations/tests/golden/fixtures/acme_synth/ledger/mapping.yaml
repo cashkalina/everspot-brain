@@ -1,0 +1,80 @@
+# SYNTHETIC golden-fixture mapping. Flat "register" table → property (primary) +
+# customer + interment (secondaries). Validates against schemas/mapping.schema.json
+# and uses only fields present in contract/target_schema.json.
+#
+# NOTE: `source` names are the POST-INGEST (normalized/lowercased) column names —
+# ingest lowercases all headers, and assemble reads cells by the exact source name.
+schema_version: 1
+
+tables:
+  - source_table: register
+    target_entity: property
+    secondary_entities: [customer, interment]
+    columns:
+      # The grave (property) — deduped by plot_no so multi-occupancy = 1 property/N interments.
+      - source: plot_no
+        action: external_id
+        confidence: 1.0
+      - source: section
+        action: map
+        target: property.section
+        confidence: 0.95
+      - source: lot
+        action: map
+        target: property.lot
+        confidence: 0.95
+      - source: space
+        action: map
+        target: property.space
+        confidence: 0.95
+
+      # The decedent customer (separate first/last columns — no joint-name split needed).
+      - source: first
+        action: map
+        target: customer.first_name
+        confidence: 0.97
+      - source: last
+        action: map
+        target: customer.last_name
+        confidence: 0.97
+
+      # Birth (customer.dob) split Y/M/D columns → composed partial date.
+      - source: birth_year
+        action: map
+        target: customer.dob.year
+        confidence: 0.95
+      - source: birth_month
+        action: map
+        target: customer.dob.month
+        confidence: 0.95
+      - source: birth_day
+        action: map
+        target: customer.dob.day
+        confidence: 0.95
+
+      # Death (interment.dod) split Y/M/D columns → composed partial date.
+      - source: death_year
+        action: map
+        target: interment.dod.year
+        confidence: 0.95
+      - source: death_month
+        action: map
+        target: interment.dod.month
+        confidence: 0.95
+      - source: death_day
+        action: map
+        target: interment.dod.day
+        confidence: 0.95
+
+      # Interment type coded value → tenant list_option id (value-set resolution).
+      - source: itype
+        action: value_map
+        target: interment.interment_type_id
+        value_set_ref: register.itype
+        confidence: 0.9
+
+    reference_resolution:
+      - field: interment_type_id
+        via: list_options
+        type: interment_type
+        resolved: { "burial": 11, "cremation": 12 }

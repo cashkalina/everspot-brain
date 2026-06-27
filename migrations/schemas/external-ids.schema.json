@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/external-ids.schema.json",
+  "title": "External ID Ledger",
+  "description": "Shape of ledger/external_ids.json — minted once, keyed by source_id (or canonical entity id for resolved/merged entities). Holds the stable external_id and, once harvested post-load, the Everspot internal id. This anchoring (source_id → external_id) is what makes loads idempotent. See 01-operating-model.md §2 and plan §3 stage 9.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["entries"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1, "default": 1 },
+    "entries": {
+      "type": "object",
+      "description": "Map keyed by source_id (\"<table>:<key>\") or canonical id (\"canonical:<entity>:<n>\" for merged entities spanning multiple source rows) → mint record.",
+      "additionalProperties": { "$ref": "#/$defs/mintRecord" },
+      "propertyNames": {
+        "pattern": "^([^:]+:.+|canonical:[a-z_]+:.+)$"
+      }
+    }
+  },
+  "$defs": {
+    "mintRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_id", "entity", "minted_at"],
+      "properties": {
+        "external_id": {
+          "type": "string",
+          "description": "The minted external id (format src:<entity-abbrev>:<source-key>). Permanent.",
+          "pattern": "^src:[a-z_]+:.+$"
+        },
+        "everspot_id": {
+          "type": ["integer", "null"],
+          "description": "Everspot internal id, harvested after load (via external-ids export/Orion read). Null until loaded.",
+          "default": null
+        },
+        "entity": {
+          "type": "string",
+          "description": "Canonical entity this id identifies.",
+          "enum": [
+            "customer", "address", "property", "property_group",
+            "property_commitment", "owner_file", "owner_file_line", "interment"
+          ]
+        },
+        "minted_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the external_id was first minted (never changes across drops)."
+        },
+        "loaded_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When everspot_id was harvested."
+        },
+        "source_ids": {
+          "type": "array",
+          "description": "For merged/entity-resolved records, the constituent source_ids collapsed into this canonical id.",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

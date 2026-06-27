@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/project.schema.json",
+  "title": "Migration Project",
+  "description": "Shape of project.yaml — the long-lived per-engagement config: client meta, the sandbox load target, per-source-table source_key declarations (for identity), and the list of snapshots/drops. See 01-operating-model.md §1, §2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["client", "target", "sources"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "description": "Version of this project.yaml shape.",
+      "minimum": 1,
+      "default": 1
+    },
+    "client": {
+      "type": "object",
+      "description": "Client / engagement metadata.",
+      "additionalProperties": false,
+      "required": ["slug", "name"],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "URL/dir-safe project identifier; also the project directory name.",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "name": { "type": "string", "description": "Human-readable client name." },
+        "legacy_system": {
+          "type": "string",
+          "description": "Name/vendor of the source system the data was exported from."
+        },
+        "engagement_started": {
+          "type": "string",
+          "format": "date",
+          "description": "When the migration engagement began."
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "description": "The Everspot sandbox tenant this project loads into. Wave-0 introspection and the eventual load point here.",
+      "additionalProperties": false,
+      "required": ["domain", "token_env_var", "user_id_header"],
+      "properties": {
+        "domain": {
+          "type": "string",
+          "description": "Sandbox tenant domain, e.g. acme.everspot.test.",
+          "format": "hostname"
+        },
+        "token_env_var": {
+          "type": "string",
+          "description": "Name of the env var that holds the Orion API token (the token itself is never committed).",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "user_id_header": {
+          "type": "integer",
+          "description": "Value for the Orion `user-id` header — the migration user (must hold the relevant Spatie viewAny/create/update permissions). See plan §2.1.",
+          "minimum": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "description": "Stancl tenant UUID, if known. Optional; informational."
+        },
+        "ip_whitelisted": {
+          "type": "boolean",
+          "description": "Confirmation that the pipeline's egress IP is whitelisted on the sandbox tenant.",
+          "default": false
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "description": "One entry per source table. The source_key declaration drives source_id computation (01-operating-model.md §2). If a table's key is unknown it is deferred to a Gate-1 question rather than guessed.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["table"],
+        "properties": {
+          "table": {
+            "type": "string",
+            "description": "Normalized source table name (matches snapshots/<v>/tables/<table>.parquet)."
+          },
+          "description": {
+            "type": "string",
+            "description": "What this table holds in the client's system."
+          },
+          "source_key": {
+            "type": "array",
+            "description": "Column(s) that uniquely identify a record in the client's system. Composite keys are ordered. Omit/empty only when key is unknown — then set key_status:deferred.",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "key_status": {
+            "type": "string",
+            "description": "confirmed = declared key trusted; deferred = unknown, raise a Gate-1 question; hashed = no stable key, fall back to deterministic hash of identifying columns (flag fragility).",
+            "enum": ["confirmed", "deferred", "hashed"],
+            "default": "confirmed"
+          },
+          "key_columns": {
+            "type": "array",
+            "description": "When key_status=hashed, the identifying columns hashed to derive source_key.",
+            "items": { "type": "string" }
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "key_status": { "const": "confirmed" } } },
+            "then": { "required": ["source_key"] }
+          },
+          {
+            "if": { "properties": { "key_status": { "const": "hashed" } } },
+            "then": { "required": ["key_columns"] }
+          }
+        ]
+      }
+    },
+    "snapshots": {
+      "type": "array",
+      "description": "The drops received for this project, in order. Raw bytes live under snapshots/<id>/raw/ and are immutable.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "received"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Snapshot identifier, e.g. v1, v2.",
+            "pattern": "^v[0-9]+$"
+          },
+          "received": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the drop was received."
+          },
+          "files": {
+            "type": "array",
+            "description": "Original filenames placed in snapshots/<id>/raw/.",
+            "items": { "type": "string" }
+          },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

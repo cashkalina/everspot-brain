@@ -1,0 +1,560 @@
+{
+    "version": 1,
+    "generated_from": "php artisan migration:generate-contract",
+    "note": "Generated + committed (SPEC \u00a76.2). LOGICAL schema: FKs are *_ref external_ids, partial dates are objects, value-sets are resolved *_id ints. Do not hand-edit \u2014 re-run the generator.",
+    "entities": {
+        "cemetery": {
+            "table": "cemeteries",
+            "route": "/api/v1/cemeteries",
+            "reference_data": true,
+            "fields": {
+                "external_id": {
+                    "type": "external_id",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "_provenance": {
+                    "type": "object",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "_confidence": {
+                    "type": "number",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "legal_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "short_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "address_line_one": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "address_line_two": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "city": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "zip_code": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "contact_phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "contact_email": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "website": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "attribute_data": {
+                    "type": "object",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null,
+                    "json_object": true
+                },
+                "config_data": {
+                    "type": "object",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "json_object": true
+                }
+            }
+        },
+        "property_group": {
+            "table": "property_groups",
+            "route": "/api/v1/property-groups",
+            "reference_data": false,
+            "fields": {
+                "external_id": {
+                    "type": "external_id",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "_provenance": {
+                    "type": "object",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "_confidence": {
+                    "type": "number",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "cemetery_ref": {
+                    "type": "ref",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null,
+                    "fk_target": "cemetery",
+                    "from_column": "cemetery_id"
+                }
+            }
+        },
+        "property": {
+            "table": "properties",
+            "route": "/api/v1/properties",
+            "reference_data": false,
+            "fields": {
+                "external_id": {
+                    "type": "external_id",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "_provenance": {
+                    "type": "object",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "_confidence": {
+                    "type": "number",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "property_group_ref": {
+                    "type": "ref",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null,
+                    "fk_target": "property_group",
+                    "from_column": "property_group_id"
+                },
+                "cemetery_ref": {
+                    "type": "ref",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null,
+                    "fk_target": "cemetery",
+                    "from_column": "cemetery_id"
+                },
+                "section": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "attribute_area": "location-property"
+                },
+                "lot": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "attribute_area": "location-property"
+                },
+                "space": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "attribute_area": "location-property"
+                },
+                "attributes": {
+                    "type": "object",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "property_type_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "default": null,
+                    "required_on_insert": false,
+                    "resolved_on_load": true
+                }
+            }
+        },
+        "customer": {
+            "table": "customers",
+            "route": "/api/v1/customers",
+            "reference_data": false,
+            "fields": {
+                "external_id": {
+                    "type": "external_id",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "_provenance": {
+                    "type": "object",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "_confidence": {
+                    "type": "number",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "status": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "first_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "middle_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "last_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "suffix_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "list_option_type": "name_suffix",
+                    "fk_target": "list_option"
+                },
+                "company_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "contact_email": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "contact_phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": "1"
+                },
+                "dob": {
+                    "type": "partial_date",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "columns": [
+                        "dob_year",
+                        "dob_month",
+                        "dob_day",
+                        "dob_estimated"
+                    ]
+                },
+                "parent_ref": {
+                    "type": "ref",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "fk_target": "customer",
+                    "from_column": "parent_id"
+                },
+                "cemetery_ref": {
+                    "type": "ref",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "fk_target": "cemetery"
+                },
+                "attributes": {
+                    "type": "object",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                }
+            }
+        },
+        "interment": {
+            "table": "interments",
+            "route": "/api/v1/interments",
+            "reference_data": false,
+            "fields": {
+                "external_id": {
+                    "type": "external_id",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "_provenance": {
+                    "type": "object",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "_confidence": {
+                    "type": "number",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "date": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "resolved_on_load": true
+                },
+                "status": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "first_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "middle_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "last_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "suffix_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "list_option_type": "name_suffix",
+                    "fk_target": "list_option"
+                },
+                "interment_type_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "list_option_type": "interment_type",
+                    "fk_target": "list_option"
+                },
+                "service_type_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "list_option_type": "service_type",
+                    "fk_target": "list_option"
+                },
+                "sex_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "list_option_type": "sex",
+                    "fk_target": "list_option"
+                },
+                "nok_relation_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "list_option_type": "customer_relation",
+                    "fk_target": "list_option"
+                },
+                "age": {
+                    "type": "integer",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "dob": {
+                    "type": "partial_date",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "columns": [
+                        "dob_year",
+                        "dob_month",
+                        "dob_day",
+                        "dob_estimated"
+                    ]
+                },
+                "dod": {
+                    "type": "partial_date",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "columns": [
+                        "dod_year",
+                        "dod_month",
+                        "dod_day",
+                        "dod_estimated"
+                    ]
+                },
+                "doi": {
+                    "type": "partial_date",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "columns": [
+                        "doi_year",
+                        "doi_month",
+                        "doi_day",
+                        "doi_estimated"
+                    ]
+                },
+                "deceased_ref": {
+                    "type": "ref",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null,
+                    "fk_target": "customer",
+                    "from_column": "deceased_id"
+                },
+                "property_ref": {
+                    "type": "ref",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "fk_target": "property",
+                    "from_column": "interment_space_id"
+                },
+                "cemetery_ref": {
+                    "type": "ref",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "fk_target": "cemetery",
+                    "from_column": "cemetery_id",
+                    "resolved_on_load": true
+                },
+                "next_of_kin_ref": {
+                    "type": "ref",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null,
+                    "fk_target": "customer",
+                    "from_column": "nok_id"
+                },
+                "next_of_kin_relation": {
+                    "type": "string",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "attributes": {
+                    "type": "object",
+                    "nullable": true,
+                    "required_on_insert": false,
+                    "default": null
+                }
+            }
+        },
+        "list_option": {
+            "table": "list_options",
+            "route": "/api/v1/list-options",
+            "reference_data": true,
+            "fields": {
+                "external_id": {
+                    "type": "external_id",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "_provenance": {
+                    "type": "object",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "_confidence": {
+                    "type": "number",
+                    "nullable": false,
+                    "required_on_insert": false,
+                    "default": null
+                },
+                "type": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "key": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": false,
+                    "required_on_insert": true,
+                    "default": null
+                }
+            }
+        }
+    }
+}

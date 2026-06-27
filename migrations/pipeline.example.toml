@@ -1,0 +1,3 @@
+# Copy to pipeline.toml (machine-local, gitignored) and set your Everspot checkout path.
+# Resolution precedence: env EVERSPOT_CODEBASE_PATH > pipeline.toml > default.
+everspot_codebase_path = "/path/to/everspot"

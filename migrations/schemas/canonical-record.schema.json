@@ -1,0 +1,444 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://everspot.io/migration-pipeline/schemas/canonical-record.schema.json",
+    "title": "Canonical Load Records",
+    "description": "DERIVED from contract/target_schema.json by `php artisan migration:generate-contract` (SPEC \u00a76.4). Do not hand-edit.",
+    "oneOf": [
+        {
+            "$ref": "#/$defs/property_group"
+        },
+        {
+            "$ref": "#/$defs/property"
+        },
+        {
+            "$ref": "#/$defs/customer"
+        },
+        {
+            "$ref": "#/$defs/interment"
+        }
+    ],
+    "$defs": {
+        "externalId": {
+            "type": "string",
+            "description": "Stable external id, format \"src:<entity>:<source-key>\".",
+            "pattern": "^src:[a-z_]+:.+$"
+        },
+        "partialDate": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "year",
+                "month",
+                "day",
+                "estimated"
+            ],
+            "properties": {
+                "year": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 9999
+                },
+                "month": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 12
+                },
+                "day": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 31
+                },
+                "estimated": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "provenance": {
+            "type": "object",
+            "required": [
+                "table",
+                "row"
+            ],
+            "properties": {
+                "table": {
+                    "type": "string"
+                },
+                "row": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "source_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+        },
+        "attributeBag": {
+            "type": "object",
+            "description": "Open key->value map landing in Everspot's Attribute engine at load time.",
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "number",
+                    "boolean",
+                    "null"
+                ]
+            }
+        },
+        "property_group": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "external_id",
+                "name",
+                "cemetery_ref",
+                "_provenance",
+                "_confidence"
+            ],
+            "properties": {
+                "external_id": {
+                    "$ref": "#/$defs/externalId"
+                },
+                "_provenance": {
+                    "$ref": "#/$defs/provenance"
+                },
+                "_confidence": {
+                    "$ref": "#/$defs/confidence"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "cemetery_ref": {
+                    "$ref": "#/$defs/externalId"
+                }
+            }
+        },
+        "property": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "external_id",
+                "property_group_ref",
+                "cemetery_ref",
+                "_provenance",
+                "_confidence"
+            ],
+            "properties": {
+                "external_id": {
+                    "$ref": "#/$defs/externalId"
+                },
+                "_provenance": {
+                    "$ref": "#/$defs/provenance"
+                },
+                "_confidence": {
+                    "$ref": "#/$defs/confidence"
+                },
+                "property_group_ref": {
+                    "$ref": "#/$defs/externalId"
+                },
+                "cemetery_ref": {
+                    "$ref": "#/$defs/externalId"
+                },
+                "section": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "lot": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "space": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "attributes": {
+                    "$ref": "#/$defs/attributeBag"
+                },
+                "property_type_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "customer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "external_id",
+                "status",
+                "_provenance",
+                "_confidence"
+            ],
+            "properties": {
+                "external_id": {
+                    "$ref": "#/$defs/externalId"
+                },
+                "_provenance": {
+                    "$ref": "#/$defs/provenance"
+                },
+                "_confidence": {
+                    "$ref": "#/$defs/confidence"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "middle_name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "last_name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "suffix_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "company_name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "contact_email": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "contact_phone": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "dob": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/partialDate"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "parent_ref": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/externalId"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "cemetery_ref": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/externalId"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "attributes": {
+                    "$ref": "#/$defs/attributeBag"
+                }
+            }
+        },
+        "interment": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "external_id",
+                "status",
+                "deceased_ref",
+                "_provenance",
+                "_confidence"
+            ],
+            "properties": {
+                "external_id": {
+                    "$ref": "#/$defs/externalId"
+                },
+                "_provenance": {
+                    "$ref": "#/$defs/provenance"
+                },
+                "_confidence": {
+                    "$ref": "#/$defs/confidence"
+                },
+                "date": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "middle_name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "last_name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "suffix_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "interment_type_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "service_type_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "sex_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "nok_relation_id": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "age": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "dob": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/partialDate"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "dod": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/partialDate"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "doi": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/partialDate"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "deceased_ref": {
+                    "$ref": "#/$defs/externalId"
+                },
+                "property_ref": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/externalId"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "cemetery_ref": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/externalId"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "next_of_kin_ref": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/$defs/externalId"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "next_of_kin_relation": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "attributes": {
+                    "$ref": "#/$defs/attributeBag"
+                }
+            }
+        }
+    }
+}

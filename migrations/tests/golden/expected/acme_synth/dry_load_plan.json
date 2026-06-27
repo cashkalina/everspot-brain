@@ -1,0 +1,33 @@
+{
+  "created_counts": {
+    "property_group": 1,
+    "property": 3,
+    "customer": 3,
+    "interment": 3
+  },
+  "updated_counts": {
+    "property_group": 0,
+    "property": 0,
+    "customer": 0,
+    "interment": 0
+  },
+  "failed_counts": {
+    "property_group": 0,
+    "property": 0,
+    "customer": 0,
+    "interment": 0
+  },
+  "registered_external_ids": [
+    "src:customer:2d60d576bfbca5dc15f6",
+    "src:customer:301ccf22a87e3c5334f9",
+    "src:customer:75113eb1fb0ab1eea547",
+    "src:interment:06f41fb16ba8d57823f0",
+    "src:interment:50f280e04d2794673a34",
+    "src:interment:7dc2a5db29773cda975a",
+    "src:property:157322f8770f84505855",
+    "src:property:4e4071fd1b30cd5eb89b",
+    "src:property:8afa01ccdac69ad75b02",
+    "src:property_group:2de55f5275cac9d0a90f"
+  ],
+  "errors": []
+}

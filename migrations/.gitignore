@@ -1,0 +1,13 @@
+# Machine-local config (per-machine Everspot path)
+pipeline.toml
+
+# Python virtualenv (rebuild per SPEC §18)
+.venv/
+
+# Per-client migration projects (client data never lives in the repo)
+projects/
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/

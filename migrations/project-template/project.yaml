@@ -1,0 +1,46 @@
+# EXAMPLE — populated project.yaml for a fictional client.
+# Validates against schemas/project.schema.json. The Orion token itself is never
+# committed; only the env-var NAME that holds it. See 01-operating-model.md §1, §2.
+schema_version: 1
+
+client:
+  slug: acme-cemetery
+  name: Acme Memorial Gardens
+  legacy_system: "CemSoft 7 (Access export)"
+  engagement_started: "2026-06-25"
+  notes: >
+    EXAMPLE client. Legacy export is three Access tables: owners, plots, burials.
+    No GUID on burials — identity for that table is deferred to Gate 1.
+
+target:
+  domain: acme.everspot.test          # sandbox tenant pulled from production
+  token_env_var: ACME_MIGRATION_TOKEN # Orion API token lives here, never in the repo
+  user_id_header: 42                  # migration user; holds the *.viewAny/create/update perms
+  tenant_id: 9944afc9-c790-43df-a9c2-2c23c36f23ec
+  ip_whitelisted: true
+
+sources:
+  - table: MASTER_OWNERS
+    description: One row per plot owner (the client's customer master).
+    source_key: [INTERNAL_GUID]       # client's own stable GUID — ideal key
+    key_status: confirmed
+
+  - table: PLOTS
+    description: One row per grave/plot space, with section/lot/space and a status code.
+    source_key: [PLOT_NO]             # client's plot number, unique within the cemetery
+    key_status: confirmed
+
+  - table: BURIALS
+    description: One row per interment; decedent name + dates + the plot buried in.
+    # No stable client key on this table — identity deferred to a Gate-1 question
+    # (q_0003 in this example). Until answered, falls back to a hash if forced.
+    key_status: deferred
+
+snapshots:
+  - id: v1
+    received: "2026-06-25"
+    files:
+      - acme_owners.csv
+      - acme_plots.csv
+      - acme_burials.csv
+    note: Initial full export. EXAMPLE.

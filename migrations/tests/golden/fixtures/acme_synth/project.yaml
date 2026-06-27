@@ -1,0 +1,33 @@
+# SYNTHETIC golden fixture — a small flat-register migration project for the §12
+# golden-file tests. Entirely fabricated data (no client PII). The flat "register"
+# table is one row per grave that may also carry a decedent + interment, exercising:
+#   - burial split (one row → Property + Customer + Interment)
+#   - multi-occupancy parent dedup (two rows share PLOT_NO A-12-1 → 1 property, 2 interments)
+#   - partial dates (birth day=0 benign; death Feb-29-1990 non-leap → day dropped + flagged)
+#   - a value-set resolution (ITYPE BUR/CRE → interment_type_id 11/12)
+#   - an empty grave (A-13-1) → property-only, no phantom child records
+schema_version: 1
+
+client:
+  slug: acme-synth
+  name: Acme Synthetic (test fixture)
+  legacy_system: "Synthetic flat register"
+  engagement_started: "2026-06-27"
+
+target:
+  domain: acme-synth-sb.manama-v1.test
+  token_env_var: ACME_SYNTH_MIGRATION_TOKEN
+  user_id_header: 1
+
+sources:
+  - table: register
+    description: One row per grave space; may carry a decedent + interment.
+    source_key: [PLOT_NO, SPACE]   # plot + space uniquely identifies a grave row
+    key_status: confirmed
+
+snapshots:
+  - id: v1
+    received: "2026-06-27"
+    files:
+      - register.csv
+    note: SYNTHETIC initial export.

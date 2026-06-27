@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/mapping.schema.json",
+  "title": "Mapping Ledger",
+  "description": "Shape of ledger/mapping.yaml — the durable, drop-independent column→target mapping decisions. Keyed by source table + column (never row position), so it re-applies automatically across drops. See plan §4.1 and 01-operating-model.md §1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tables"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1, "default": 1 },
+    "tables": {
+      "type": "array",
+      "description": "One mapping block per source table.",
+      "items": { "$ref": "#/$defs/tableMapping" }
+    }
+  },
+  "$defs": {
+    "tableMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_table", "target_entity", "columns"],
+      "properties": {
+        "source_table": { "type": "string", "description": "Normalized source table name." },
+        "target_entity": {
+          "type": "string",
+          "description": "Primary Everspot entity rows of this table become.",
+          "enum": [
+            "customer", "address", "property", "property_group",
+            "property_commitment", "owner_file", "owner_file_line", "interment"
+          ]
+        },
+        "secondary_entities": {
+          "type": "array",
+          "description": "Additional entities a single source row also produces (e.g. a BURIALS row yields both a customer (the decedent) and an interment).",
+          "items": { "type": "string" }
+        },
+        "columns": {
+          "type": "array",
+          "description": "Per-column mapping decisions.",
+          "items": { "$ref": "#/$defs/columnMapping" }
+        },
+        "reference_resolution": {
+          "type": "array",
+          "description": "Value-set → real tenant list_option ID resolutions for fields on this table (resolved against the Wave-0 tenant snapshot).",
+          "items": { "$ref": "#/$defs/referenceResolution" }
+        }
+      }
+    },
+    "columnMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "action", "confidence"],
+      "properties": {
+        "source": { "type": "string", "description": "Source column name." },
+        "action": {
+          "type": "string",
+          "description": "How this column is consumed: map=1:1 to a target field; split_name=one cell → multiple name parts; value_map=coded value → target value (see value_sets.yaml); derive=computed from one/more columns; external_id=this column IS the source key feeding external_id; unmapped=intentionally ignored.",
+          "enum": ["map", "split_name", "value_map", "derive", "external_id", "unmapped"]
+        },
+        "target": {
+          "type": "string",
+          "description": "Single target field. Used by action=map and action=value_map."
+        },
+        "targets": {
+          "type": "array",
+          "description": "Multiple target fields. Used by action=split_name (and action=derive when it fans out).",
+          "items": { "type": "string" }
+        },
+        "transform": {
+          "type": ["string", "null"],
+          "description": "Cleansing primitive applied (e.g. parse_name, normalize_phone, normalize_date, to_cents). Null for pass-through.",
+          "default": null
+        },
+        "transform_version": {
+          "type": ["string", "null"],
+          "description": "VERSION of the transform script that produced cached cells — feeds version-aware memoization (01-operating-model.md §5.2).",
+          "default": null
+        },
+        "value_set_ref": {
+          "type": "string",
+          "description": "For action=value_map: the value-set key in value_sets.yaml (e.g. MASTER_OWNERS.STAT) holding the per-value translation."
+        },
+        "derivation": {
+          "type": "string",
+          "description": "For action=derive: human/spec description of how the value is computed."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Mapping-agent confidence in this column decision.",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "note": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "action": { "const": "map" } } },
+          "then": { "required": ["target"] }
+        },
+        {
+          "if": { "properties": { "action": { "const": "split_name" } } },
+          "then": { "required": ["targets"] }
+        },
+        {
+          "if": { "properties": { "action": { "const": "value_map" } } },
+          "then": { "required": ["target", "value_set_ref"] }
+        }
+      ]
+    },
+    "referenceResolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "via", "type"],
+      "properties": {
+        "field": { "type": "string", "description": "Target field whose value is a tenant reference ID (e.g. suffix_id, cemetery_id)." },
+        "via": {
+          "type": "string",
+          "description": "Tenant resource the ID comes from.",
+          "enum": ["list_options", "cemeteries", "property_types", "products"]
+        },
+        "type": {
+          "type": "string",
+          "description": "For via=list_options, the list_option type (e.g. name_suffix). Otherwise the resource subtype/category."
+        },
+        "resolved": {
+          "type": "object",
+          "description": "source value → real tenant ID resolved from the Wave-0 snapshot.",
+          "additionalProperties": { "type": "integer" }
+        },
+        "missing": {
+          "type": "array",
+          "description": "Source values with no matching tenant record yet — drive Wave-0b reference creation / Gate-1 questions.",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

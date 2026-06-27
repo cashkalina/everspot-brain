@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "entries": {
+    "MASTER_OWNERS:8841": {
+      "external_id": "src:customer:MASTER_OWNERS-8841",
+      "everspot_id": 10472,
+      "entity": "customer",
+      "minted_at": "2026-06-25T15:10:00Z",
+      "loaded_at": "2026-06-25T18:05:00Z"
+    },
+    "PLOTS:SEC-A-12-3": {
+      "external_id": "src:property:PLOTS-SEC-A-12-3",
+      "everspot_id": null,
+      "entity": "property",
+      "minted_at": "2026-06-25T15:10:00Z"
+    },
+    "canonical:customer:1": {
+      "external_id": "src:customer:canonical-1",
+      "everspot_id": null,
+      "entity": "customer",
+      "minted_at": "2026-06-25T15:11:00Z",
+      "source_ids": ["MASTER_OWNERS:8842", "BURIALS:48213"]
+    }
+  }
+}

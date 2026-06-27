@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://everspot.io/migration-pipeline/schemas/parse-rules.schema.json",
+  "title": "Pinned Transform Rules (parse_rules.yaml)",
+  "description": "Shape of ledger/parse_rules.yaml — the human-readable, diff-able SOURCE OF TRUTH for human-pinned transform-cache rules (the Tier-3 value cache). Each rule maps an exact input string for a given transform to an authoritative, VERSION-INDEPENDENT output that wins over any derived (deterministic/llm) entry and survives every transform-version bump. Seeded into ledger/transform_cache.sqlite via TransformCache.seed_from_rules() and exported back via export_pins(). See 01-operating-model.md §5.3 and scripts/transform_cache.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pinned_rules"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1, "default": 1 },
+    "pinned_rules": {
+      "type": "array",
+      "description": "One entry per pinned (transform, input [, context_signature]) → output.",
+      "items": { "$ref": "#/$defs/pinnedRule" }
+    }
+  },
+  "$defs": {
+    "pinnedRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transform", "input", "output"],
+      "properties": {
+        "transform": {
+          "type": "string",
+          "description": "The cleansing primitive's name (e.g. \"parse_name\", \"normalize_date\"). Part of the cache key; pinned rules are matched ignoring transform_version.",
+          "minLength": 1
+        },
+        "input": {
+          "type": "string",
+          "description": "The exact source string this rule resolves (NFC + whitespace-collapsed on lookup). e.g. \"St. John-Smith, Rev. Dr. A.\"."
+        },
+        "context_signature": {
+          "type": "string",
+          "description": "Column-level decisions that change the output (e.g. \"name_order=last_first\", \"date_format=MDY\"). Empty/omitted for context-free transforms. Part of the key, so a rule only applies under the matching interpretation.",
+          "default": ""
+        },
+        "output": {
+          "type": "object",
+          "description": "The authoritative parsed value — the structured object the transform produces (name parts, partial-date dict, etc.). Stored verbatim as the cache entry's value.",
+          "additionalProperties": true
+        },
+        "note": {
+          "type": "string",
+          "description": "Why this rule was pinned (free-form audit note)."
+        },
+        "pinned_by": {
+          "type": "string",
+          "description": "Operator email or identifier who pinned the rule."
+        },
+        "pinned_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the rule was pinned."
+        }
+      }
+    }
+  }
+}

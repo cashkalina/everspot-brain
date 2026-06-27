@@ -1,0 +1,41 @@
+# EXAMPLE — pinned transform-cache rules for the fictional client Acme Memorial Gardens.
+# This is the human-readable, diff-able SOURCE OF TRUTH for human-pinned rules in the
+# Tier-3 value cache (operating-model §5.3). Pinned rules WIN over any derived
+# (deterministic/llm) entry and are VERSION-INDEPENDENT — improving the parser never
+# discards a human's "this exact string → this parse".
+#
+# Seeded into ledger/transform_cache.sqlite via TransformCache.seed_from_rules(); a
+# human correction made through TransformCache.pin() round-trips back here via
+# export_pins(). Validated against ../../schemas/parse-rules.schema.json.
+
+schema_version: 1
+pinned_rules:
+  # A gnarly clergy/academic name nameparser mis-splits: it would treat "Rev. Dr."
+  # and "St. John-Smith" inconsistently. The operator pinned the correct components.
+  - transform: parse_name
+    input: "St. John-Smith, Rev. Dr. A."
+    output:
+      title: "Rev. Dr."
+      first: "A."
+      middle: null
+      last: "St. John-Smith"
+      suffix: null
+      nickname: null
+    note: "Hyphenated compound surname + stacked clergy/academic titles; reversed Last, First form."
+    pinned_by: "operator@acme-migration.example"
+    pinned_at: "2026-06-20T15:04:00Z"
+
+  # An ambiguous numeric date where both components are <= 12. The client's system
+  # records month-first (MDY), so 03/04/1947 is March 4, not April 3. The context
+  # signature scopes the pin to that interpretation — a DMY column would NOT reuse it.
+  - transform: normalize_date
+    input: "03/04/1947"
+    context_signature: "date_format=MDY"
+    output:
+      year: 1947
+      month: 3
+      day: 4
+      estimated: false
+    note: "Client records dates month-first; pinned to resolve the DD/MM ambiguity under MDY."
+    pinned_by: "operator@acme-migration.example"
+    pinned_at: "2026-06-21T09:12:00Z"
