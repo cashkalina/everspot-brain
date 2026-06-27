@@ -31,11 +31,16 @@ A `0`/blank component composes silently to null; a genuinely out-of-range value 
 to null **and** raises a `data_quality` flag (e.g. a year value that leaked into a
 "Death Month" column).
 
-## interment.date NOT-NULL sentinel
+## interment.date (NOT NULL) — operational date, NOT the burial-date claim
 
-`interments.date` is NOT NULL. When no real date is known, compose from dod → doi → dob,
-else use the **flagged sentinel `1900-01-01`**. The flag is what lets the report and the
-user find these later. (Making the column nullable is an open Orion-ergonomics item.)
+`interments.date` is a required (NOT NULL) **operational** column — it is NOT a claim
+about when the burial happened. The semantic date of interment lives in **`doi`** (a
+partial date, null when unknown). The loader (`orion_load._interment_date`) composes the
+`date` column from **`doi` → `dod`** when present, else **defaults to Jan 1 of the current
+year**. It NEVER falls back to `dob` (the decedent's birthday — the old M3 bug) and there
+is NO `1900-01-01` sentinel. `_has_source_interment_date` records a benign "defaulted to …"
+note so the defaulting is visible in the load report. Leaving `doi` null is how a genuinely
+unknown burial date stays honest.
 
 ## Graduation
 

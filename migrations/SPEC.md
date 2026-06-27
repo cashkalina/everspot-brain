@@ -172,7 +172,7 @@ These are the codebase realities the contract (§6) encodes and the assembler ob
 - **Decedents *are* Customers.** Each burial source row splits into a **Customer** (the person) + an **Interment** whose **`deceased_ref` is required and non-null**. A decedent is never buried twice → every interment gets its own distinct customer.
 - **A grave space** = one **Property** under a **PropertyGroup** under a **Cemetery**. Multi-occupancy = 1 property + N interments (dedup the property by its `external_id`-action key).
 - **Property requires** `property_type_id` + `property_group_id` + `cemetery_id` (all NOT NULL).
-- **`interments.date` is NOT NULL.** Historical interments with no known date currently use a flagged sentinel (`1900-01-01`); making this nullable is an open Orion-ergonomics decision (§13.3d).
+- **`interments.date` is NOT NULL** and is the *operational* interment date — NOT a claim about the burial date (the *semantic* date of interment lives in `doi`, a partial date that stays null when unknown). The loader (`orion_load._interment_date`) composes the `date` column from `doi`/`dod` when present, else **defaults to Jan 1 of the current year** (never the decedent's birthday, never a `1900-01-01` sentinel, never null). Historical interments still land `completed` via the platform `is_manual` flag (the loader sets it → relaxed manual stage validation) + the always-present `date`. (Decision: `date` stays NOT NULL — see §13.3d.)
 - **Partial dates** (`dob`/`dod`/`doi` on interment; `dob` on customer) are stored as `_year/_month/_day/_estimated` columns via `PartialDateCast`. They must be **calendar-valid** (no Feb-29 non-leap, no Apr-31) and honor the **PartialDate contract** ("day requires month" — an orphan day → null).
 - **Enums are list_options.** `interment_type`, `name_suffix`, `customer_relation`, `sex`, `service_type`, etc. A value-set value must resolve to a real tenant `list_option` id **or become a question** — never invented.
 - **Property location** (section/lot/space) belongs in the **Attribute engine** (custom fields, area code `location-property`), not a free-text `description`. The loader writes it as structured custom-field values via the idempotent `attribute-values/batch-upsert` Orion endpoint after each property is created (§13.3c — **DONE**, loader-side only); the `location-property` area + its attributes are resolved once over the Orion read backbone and surface as a Wave-0b reference gap if absent (ids never invented).
@@ -330,7 +330,7 @@ Each is a user decision, to be specced separately before coding:
 - **(a)** upsert-by-external_id **OR** accept `external_id` in the create payload + atomic `HasExternalIds` registration (removes the prefetch-all + check-then-create round-trip).
 - **(b)** batch transactions default-on for the migration token.
 - **(c)** a first-class **Attribute-engine write path** for grave location — **DONE** (loader-side, via the existing `attribute-values/batch-upsert` Orion endpoint; no longer punted into `description`).
-- **(d)** consider **nullable `interment.date`** for historical interments (currently a flagged `1900-01-01` sentinel).
+- **(d)** ~~nullable `interment.date`~~ — **DECIDED (not pursued): `interments.date` stays NOT NULL.** The C3 nullable migration was reverted; undated historical interments get a Jan-1-of-current-year default in the loader (§7.2), and the genuinely-unknown burial date lives in `doi`.
 
 > Optional Orion 1d items: validation Request classes (safe); a migration-token type lifting the 7-day cap while keeping the IP whitelist (**auth-adjacent — explicit approval required**).
 
@@ -433,6 +433,15 @@ everspot-brain/migrations/               # THE GENERAL LAYER (tracked, shared ac
 **Then:** **Orion write ergonomics** (§13.3, after approval), deepen §11, and robustness for unattended runs: fuzzy rematch in `delta` (key drift ≠ remove+add), a first-class partial-date/data-quality subsystem + standardized report, full structured error capture + resumable/checkpointed load, and a PII-id policy (opaque/hashed vs. documented exposure of names in source_ids/external_ids).
 
 **Land incrementally, each with tests.** Do not attempt it all at once.
+
+### Status & immediate next steps (2026-06-27)
+**DONE:** the foundation (§6/§11/§12), the runnable stages + single question round + `/migrate` orchestrator, the trust-layer hardening pass (H1–H3, M1–M6, L1–L7), the generalization pass (A1 atomic create+register, A2 self-healing `reconcile --live --correct`, C1 live-LLM allowed on real data, C2 opaque/hashed external_ids, B4a configurable codebase path), and the **extraction of this general layer into its own repo at `everspot-brain/migrations/`**. Offline suite 235 passed / 3 skipped; live contract-conformance passes. Everything pushed (everspot-brain `main`; the Everspot-side Orion/contract hooks on `sandbox-flow-smoke-test`).
+
+**NEXT (in order):**
+1. **Live AI-assisted cleanup test** — turn the LLM tier on with a real `ANTHROPIC_API_KEY` (C1 lifted the PII gate): pick a model, generate ~30 messy examples, fire ~30 real calls, evaluate; re-validate every output through the library.
+2. **Fresh-project (non-resume) cold-start** — wipe a client project to just its raw source + refresh the sandbox to clean, then run `/migrate` from zero to prove the autonomous draft→question→answer→load path end-to-end (the last untested leg of the north star).
+
+**Then:** a 2nd real data shape (generality); load-side §10.2 version-aware invalidation (auto re-PATCH canonical-drifted unchanged-source rows — `reconcile --live --correct` detects + fixes drift today, but a script-version bump doesn't auto-trigger it); fuzzy rematch in `delta` (key drift ≠ remove+add); financial/ownership entities (v1.1); and an opaque-id rollout note (C2 already hashes external_ids; source_ids stay human-readable internally).
 
 ---
 

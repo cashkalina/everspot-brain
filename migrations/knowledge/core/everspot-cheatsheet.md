@@ -14,7 +14,7 @@ the generated contract — never hardcode them per client.
 ## Required fields (NOT NULL on insert)
 
 - **Property** requires `property_type_id` + `property_group_id` + `cemetery_id`.
-- **Interment** requires `deceased_ref` and **`interments.date` (NOT NULL)**. Historical interments with no known date use a **flagged sentinel `1900-01-01`** (nullable date is an open Orion-ergonomics item).
+- **Interment** requires `deceased_ref` and **`interments.date` (NOT NULL)** — the *operational* date, composed by the loader from `doi`/`dod` else **Jan 1 of the current year** (never the birthday, never a `1900` sentinel, never null). The *semantic* date of interment is **`doi`** (null when unknown). Historical interments land `completed` via the platform **`is_manual`** flag (the loader sets it → relaxed manual validation) + the always-present `date`.
 - **Cemetery** requires `attribute_data` / `config_data` — send as JSON **strings** `"{}"`, not arrays.
 
 ## Partial dates
